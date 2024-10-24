@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Response
 from fastapi.security import HTTPBearer
 
 from src.schemas.user_info import UserInfo
@@ -9,9 +9,12 @@ from src.service.service import (
 )
 from src.utils.auth import (
     validate_auth_user,
-    get_current_auth_user,
-    get_current_auth_user_for_refresh,
+    get_current_auth_user_from_cookie,
+    add_refresh_token_to_db,
+    get_refresh_token_from_db,
 )
+
+# from trash import get_current_auth_user, get_current_auth_user_for_refresh
 from src.utils.auth import create_access_token, create_refresh_token
 
 http_bearer = HTTPBearer(auto_error=False)
@@ -31,9 +34,13 @@ async def registration(
 
 
 @router.post("/login/", status_code=status.HTTP_200_OK, response_model=UserAuthLoginOut)
-async def login(user_data: UserAuthLoginIn = Depends(validate_auth_user)):
+async def login(
+    response: Response, user_data: UserAuthLoginIn = Depends(validate_auth_user)
+):
     access_token = create_access_token(user_data)
     refresh_token = create_refresh_token(user_data)
+    await add_refresh_token_to_db(refresh_token)
+    response.set_cookie(key="users_access_token", value=access_token, httponly=True)
     return {
         "success": True,
         "access_token": access_token,
@@ -41,17 +48,34 @@ async def login(user_data: UserAuthLoginIn = Depends(validate_auth_user)):
     }
 
 
-@router.post(
-    "/refresh/", response_model=UserAuthLoginOut, response_model_exclude_none=True
-)
-async def auth_refresh_jwt(user: UserInfo = Depends(get_current_auth_user_for_refresh)):
-    access_token = create_access_token(user)
-    return {
-        "success": True,
-        "access_token": access_token,
-    }
+# @router.post(
+#     "/refresh/", response_model=UserAuthLoginOut, response_model_exclude_none=True
+# )
+# # async def auth_refresh_jwt(user: UserInfo = Depends(get_current_auth_user_for_refresh)):
+# #     access_token = create_access_token(user)
+# #     return {
+# #         "success": True,
+# #         "access_token": access_token,
+# #     }
+# #
+# #
 
 
-@router.get("/users/me")
-async def get_my_info(user: UserInfo = Depends(get_current_auth_user)):
-    return {"id": user.id, "login": user.login, "phone": user.phone}
+@router.get("/users/me_from cookie")
+async def get_my_info(user: UserInfo = Depends(get_current_auth_user_from_cookie)):
+    return user
+    # return {"id": user.id, "login": user.login, "phone": user.phone}
+
+
+@router.get("/refresh")
+async def get_my_info(user: UserInfo = Depends(get_current_auth_user_from_cookie)):
+    token = await get_refresh_token_from_db(user["id"])
+    return token
+    # return {"id": user.id, "login": user.login, "phone": user.phone}
+
+
+@router.post("/login/post")
+async def create_post(
+    post_data: str, current_user: UserInfo = Depends(get_current_auth_user_from_cookie)
+):
+    return {"post_data": post_data, "current_user": current_user["login"]}

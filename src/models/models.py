@@ -42,6 +42,16 @@ class UserProtect(Base):
     #
 
 
+class UserRefreshToken(Base):
+    __tablename__ = "users_refresh_tokens"
+    id: Mapped[intpk]
+    user_id_refresh: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE")
+    )
+    token_id: Mapped[str] = mapped_column(nullable=False)
+    refresh_token: Mapped[str] = mapped_column(nullable=False)
+
+
 class UserProfile(Base):
     __tablename__ = "users_profiles"
     id: Mapped[intpk]
