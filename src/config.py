@@ -1,6 +1,9 @@
+import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DOTENV = os.path.join(os.path.dirname(__file__), ".env")
 
 
 class Settings(BaseSettings):
@@ -9,10 +12,10 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
-    PRIVATE_KEY_PATH: Path = "src/certs/jwt-private.pem"
-    PUBLIC_KEY_PATH: Path = "src/certs/jwt-public.pem"
+    PRIVATE_KEY_PATH: Path = "certs/jwt-private.pem"
+    PUBLIC_KEY_PATH: Path = "certs/jwt-public.pem"
     ALGORITHM: str = "RS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     @property
@@ -20,7 +23,7 @@ class Settings(BaseSettings):
         # postgresql+asyncpg://postgres:postgres@localhost:5432/sa
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=DOTENV)
 
 
 settings = Settings()

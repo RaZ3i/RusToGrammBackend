@@ -1,5 +1,9 @@
-from fastapi import APIRouter, status, Depends, Response
+import datetime
+from typing import Annotated
+
+from fastapi import APIRouter, status, Depends, Response, Request
 from fastapi.security import HTTPBearer
+from jwt import ExpiredSignatureError
 
 from src.schemas.user_info import UserInfo
 from src.schemas.authout import UserRegisterOut, UserAuthLoginOut
@@ -12,13 +16,16 @@ from src.utils.auth import (
     get_current_auth_user_from_cookie,
     add_refresh_token_to_db,
     get_refresh_token_from_db,
+    get_current_auth_user_from_refresh,
 )
+from src.config import settings
 
 # from trash import get_current_auth_user, get_current_auth_user_for_refresh
 from src.utils.auth import create_access_token, create_refresh_token
 
-http_bearer = HTTPBearer(auto_error=False)
-router = APIRouter(prefix="/auth", tags=["Auth"], dependencies=[Depends(http_bearer)])
+# http_bearer = HTTPBearer(auto_error=False)
+# router = APIRouter(prefix="/auth", tags=["Auth"], dependencies=[Depends(http_bearer)])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post(
@@ -40,7 +47,11 @@ async def login(
     access_token = create_access_token(user_data)
     refresh_token = create_refresh_token(user_data)
     await add_refresh_token_to_db(refresh_token)
-    response.set_cookie(key="users_access_token", value=access_token, httponly=True)
+    response.set_cookie(
+        key="users_access_token",
+        value=access_token,
+        httponly=True,
+    )
     return {
         "success": True,
         "access_token": access_token,
@@ -76,6 +87,29 @@ async def get_my_info(user: UserInfo = Depends(get_current_auth_user_from_cookie
 
 @router.post("/login/post")
 async def create_post(
-    post_data: str, current_user: UserInfo = Depends(get_current_auth_user_from_cookie)
+    response: Response,
+    request: Request,
+    post_data: str,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    return {"post_data": post_data, "current_user": current_user["login"]}
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        print(current_user)
+        response.delete_cookie(key="users_access_token", domain="localhost")
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        return {"post_data": post_data, "current_user": current_user}
+    else:
+        return {"post_data": post_data, "current_user": current_user}
+
+
+@router.post("/login/logout")
+async def logout(
+    response: Response,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    response.delete_cookie(key="users_access_token", domain="localhost")
+    return {"success": True}

@@ -3,9 +3,10 @@ import uuid
 from datetime import timedelta
 from typing import Annotated
 import jwt
+from jwt.exceptions import ExpiredSignatureError, DecodeError
 from fastapi import HTTPException, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
 from starlette import status
 
 from src.database import async_session_factory
@@ -21,6 +22,15 @@ REFRESH_TOKEN_TYPE = "refresh"
 
 inv_token = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token"
+)
+inv_token_type = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token type"
+)
+unauthed_exc = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong password or login"
+)
+relog_exc = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED, detail="login in your account"
 )
 
 
@@ -48,6 +58,20 @@ def decode_jwt(
     algoritm=settings.ALGORITHM,
 ):
     decoded = jwt.decode(token, pulblic_key, algorithms=[algoritm])
+    return decoded
+
+
+def decode_jwt_verify(
+    token: str,
+    pulblic_key=settings.PUBLIC_KEY_PATH.read_text(),
+    algoritm=settings.ALGORITHM,
+):
+    decoded = jwt.decode(
+        token,
+        pulblic_key,
+        algorithms=[algoritm],
+        options={"verify_exp": False},
+    )
     return decoded
 
 
@@ -101,13 +125,20 @@ async def add_refresh_token_to_db(new_refresh_token: str):
         )
         res = await session.execute(stmt1)
         if res:
-            stmt2 = delete(UserRefreshToken).where(
-                UserRefreshToken.user_id_refresh == decode_data["sub"]
+            stmt2 = (
+                update(UserRefreshToken)
+                .where(UserRefreshToken.user_id_refresh == decode_data["sub"])
+                .values(
+                    token_id=token_data.token_id, refresh_token=token_data.refresh_token
+                )
             )
+            # stmt2 = delete(UserRefreshToken).where(
+            #     UserRefreshToken.user_id_refresh == decode_data["sub"]
+            # )
             await session.execute(stmt2)
             data = token_data.model_dump()
-            stmt3 = UserRefreshToken(**data)
-            session.add(stmt3)
+            # stmt3 = UserRefreshToken(**data)
+            # session.add(stmt3)
             await session.flush()
             await session.commit()
 
@@ -132,9 +163,6 @@ async def get_refresh_token_from_db(user_id: int) -> dict:
 async def validate_auth_user(
     user_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
-    unauthed_exc = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный пароль или логин"
-    )
     try:
         user = await get_user_auth_info(user_data.username)
         user_hash_pass = user["password"]
@@ -150,37 +178,41 @@ def validate_token_type(payload: dict, token_type: str) -> bool:
     current_token_type: str = payload.get(TOKEN_TYPE_FIELD)
     if current_token_type == token_type:
         return True
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token type"
-    )
+    raise inv_token_type
 
 
 async def get_current_auth_user_from_cookie(request: Request):
-    payload = decode_jwt(request.cookies.get("users_access_token"))
     try:
+        payload = decode_jwt(request.cookies.get("users_access_token"))
         validate_token_type(payload, ACCESS_TOKEN_TYPE)
         return payload
-    except inv_token:
-        await get_current_auth_user_from_refresh(access_token_payload=payload)
-    except:
-        raise inv_token
+    except ExpiredSignatureError:
+        return ExpiredSignatureError
+    except DecodeError:
+        raise relog_exc
+    #     payload1 = decode_jwt_verify(request.cookies.get("users_access_token"))
+    #     current_user = await get_current_auth_user_from_refresh(
+    #         access_token_payload=payload1
+    #     )
+    #     return current_user
+    # except:
+    #     raise inv_token
 
 
-async def get_current_auth_user_from_refresh(
-    access_token_payload: dict, response: Response
-):
+async def get_current_auth_user_from_refresh(request: Request):
     try:
+        access_token_exp = decode_jwt_verify(request.cookies.get("users_access_token"))
         refresh_token_payload = await get_refresh_token_from_db(
-            user_id=access_token_payload["id"]
+            user_id=access_token_exp["id"]
         )
         validate_token_type(refresh_token_payload, REFRESH_TOKEN_TYPE)
-        user_id: str | None = refresh_token_payload.get("id")
-        user = await get_user_data(user_login=user_id)
-        user_info = {"login": user.login, "id": user.id, "phone": user.phone}
+        user_login: str | None = access_token_exp.get("login")
+        user = await get_user_data(user_login=user_login)
+        user_info = {"login": user.login, "id": user.id}
         access_token = create_access_token(user=user_info)
-        refresh_token = create_refresh_token(user=user_info)
-        await add_refresh_token_to_db(refresh_token)
-        response.set_cookie(key="users_access_token", value=access_token, httponly=True)
-        return user_info
-    except:
+        # refresh_token = create_refresh_token(user=user_info)
+        # print(f"refresh_token: {refresh_token},\naccess_token: {access_token}")
+        # await add_refresh_token_to_db(refresh_token)
+        return {"user_info": user_info, "access_token": access_token}
+    except DecodeError:
         raise inv_token
