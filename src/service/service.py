@@ -38,7 +38,7 @@ async def get_user_auth_info(login: str):
 
 async def create_user(new_user: UserRegisterIn):
     async with async_session_factory() as session:
-        data1 = new_user.model_dump(include={"login", "phone"})
+        data1 = new_user.model_dump(include={"login", "phone", "email"})
         stmt1 = User(**data1)
         session.add(stmt1)
         await session.flush()

@@ -124,7 +124,7 @@ async def add_refresh_token_to_db(new_refresh_token: str):
             UserRefreshToken.user_id_refresh == decode_data["sub"]
         )
         res = await session.execute(stmt1)
-        if res:
+        if res.first():
             stmt2 = (
                 update(UserRefreshToken)
                 .where(UserRefreshToken.user_id_refresh == decode_data["sub"])
@@ -132,13 +132,7 @@ async def add_refresh_token_to_db(new_refresh_token: str):
                     token_id=token_data.token_id, refresh_token=token_data.refresh_token
                 )
             )
-            # stmt2 = delete(UserRefreshToken).where(
-            #     UserRefreshToken.user_id_refresh == decode_data["sub"]
-            # )
             await session.execute(stmt2)
-            data = token_data.model_dump()
-            # stmt3 = UserRefreshToken(**data)
-            # session.add(stmt3)
             await session.flush()
             await session.commit()
 
@@ -190,13 +184,6 @@ async def get_current_auth_user_from_cookie(request: Request):
         return ExpiredSignatureError
     except DecodeError:
         raise relog_exc
-    #     payload1 = decode_jwt_verify(request.cookies.get("users_access_token"))
-    #     current_user = await get_current_auth_user_from_refresh(
-    #         access_token_payload=payload1
-    #     )
-    #     return current_user
-    # except:
-    #     raise inv_token
 
 
 async def get_current_auth_user_from_refresh(request: Request):
@@ -208,11 +195,10 @@ async def get_current_auth_user_from_refresh(request: Request):
         validate_token_type(refresh_token_payload, REFRESH_TOKEN_TYPE)
         user_login: str | None = access_token_exp.get("login")
         user = await get_user_data(user_login=user_login)
-        user_info = {"login": user.login, "id": user.id}
+        user_info = {"login": user.login, "id": user.id, "email": user.email}
         access_token = create_access_token(user=user_info)
-        # refresh_token = create_refresh_token(user=user_info)
-        # print(f"refresh_token: {refresh_token},\naccess_token: {access_token}")
-        # await add_refresh_token_to_db(refresh_token)
         return {"user_info": user_info, "access_token": access_token}
     except DecodeError:
         raise inv_token
+    except ExpiredSignatureError:
+        raise relog_exc

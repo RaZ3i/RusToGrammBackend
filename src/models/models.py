@@ -1,6 +1,3 @@
-from sqlalchemy.dialects.postgresql import BYTEA
-from sqlalchemy.sql.sqltypes import LargeBinary
-
 from src.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, text, ForeignKey
@@ -16,6 +13,7 @@ class User(Base):
     id: Mapped[intpk]
     login: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(11), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(unique=True, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(
         server_default=text("TIMEZONE('utc', now())")
     )
