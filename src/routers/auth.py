@@ -51,12 +51,12 @@ async def login(
     }
 
 
-@router.get("/users/me_from cookie")
-async def get_my_info(user: UserInfo = Depends(get_current_auth_user_from_cookie)):
-    return user
+# @router.get("/users/me_from cookie")
+# async def get_my_info(user: UserInfo = Depends(get_current_auth_user_from_cookie)):
+#     return user
 
 
-@router.post("/login/logout")
+@router.post("/logout/")
 async def logout(
     response: Response,
 ):

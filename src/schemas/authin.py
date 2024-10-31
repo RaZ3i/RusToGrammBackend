@@ -1,14 +1,7 @@
-from typing import Annotated
 from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
-from fastapi import HTTPException, status
+from typing import Annotated
 import re
-
-wrong_pass = {
-    "error": HTTPException(
-        status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="fail pass validation"
-    ),
-    "success": False,
-}
+from errors import Errors
 
 
 class UserRegisterIn(BaseModel):
@@ -17,10 +10,27 @@ class UserRegisterIn(BaseModel):
     phone: str
     email: EmailStr
     long_hashed_password: str
-    # long_hashed_password: str = Field(
-    #     pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{10,}$",
-    # )
     short_hashed_password: str
+
+    @field_validator("login")
+    @classmethod
+    def login_match(cls, value: str):
+        if not re.match(
+            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{4,15}$",
+            value,
+        ):
+            raise Errors.wrong_login
+        return value
+
+    @field_validator("phone")
+    @classmethod
+    def phone_match(cls, value: str):
+        if not re.match(
+            r"^(8|\+7)\d{10}$",
+            value,
+        ):
+            raise Errors.wrong_phone
+        return value
 
     @field_validator("long_hashed_password")
     @classmethod
@@ -29,8 +39,16 @@ class UserRegisterIn(BaseModel):
             r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{10,}$",
             value,
         ):
-            raise wrong_pass
+            raise Errors.wrong_pass
         return value
+
+    # long_hashed_password: Annotated[
+    #     str,
+    #     Field(
+    #         ...,
+    #         pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{4,}$",
+    #     ),
+    # ]
 
 
 class UserAuthLoginIn(BaseModel):

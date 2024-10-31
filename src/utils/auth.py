@@ -16,22 +16,11 @@ from src.config import settings
 from src.service.service import get_user_auth_info
 from src.models.models import UserRefreshToken
 
+from errors import Errors
+
 TOKEN_TYPE_FIELD = "type"
 ACCESS_TOKEN_TYPE = "access"
 REFRESH_TOKEN_TYPE = "refresh"
-
-inv_token = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token"
-)
-inv_token_type = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token type"
-)
-unauthed_exc = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong password or login"
-)
-relog_exc = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED, detail="login in your account"
-)
 
 
 def encode_jwt(
@@ -163,16 +152,16 @@ async def validate_auth_user(
         if validate_password(user_data.password, user_hash_pass):
             return user
         else:
-            raise unauthed_exc
+            raise Errors.unauthed_exc
     except:
-        raise unauthed_exc
+        raise Errors.unauthed_exc
 
 
 def validate_token_type(payload: dict, token_type: str) -> bool:
     current_token_type: str = payload.get(TOKEN_TYPE_FIELD)
     if current_token_type == token_type:
         return True
-    raise inv_token_type
+    raise Errors.inv_token_type
 
 
 async def get_current_auth_user_from_cookie(request: Request):
@@ -183,7 +172,7 @@ async def get_current_auth_user_from_cookie(request: Request):
     except ExpiredSignatureError:
         return ExpiredSignatureError
     except DecodeError:
-        raise relog_exc
+        raise Errors.relog_exc
 
 
 async def get_current_auth_user_from_refresh(request: Request):
@@ -199,6 +188,6 @@ async def get_current_auth_user_from_refresh(request: Request):
         access_token = create_access_token(user=user_info)
         return {"user_info": user_info, "access_token": access_token}
     except DecodeError:
-        raise inv_token
+        raise Errors.inv_token
     except ExpiredSignatureError:
-        raise relog_exc
+        raise Errors.relog_exc

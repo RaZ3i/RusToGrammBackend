@@ -12,7 +12,7 @@ class User(Base):
     __tablename__ = "users"
     id: Mapped[intpk]
     login: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
-    phone: Mapped[str] = mapped_column(String(11), unique=True, nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(
         server_default=text("TIMEZONE('utc', now())")
@@ -56,6 +56,7 @@ class UserProfile(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     user_name: Mapped[str] = mapped_column(nullable=True)
     nickname: Mapped[str] = mapped_column(nullable=True)
+    description: Mapped[str] = mapped_column(String(150), nullable=True)
     avatar_link: Mapped[str] = mapped_column(nullable=True)
     private_account: Mapped[bool] = mapped_column(default=True)
 

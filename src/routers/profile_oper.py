@@ -1,10 +1,14 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, status
 from jwt import ExpiredSignatureError
 from starlette.requests import Request
 from starlette.responses import Response
-
-from schemas.user_info import UserInfo
-from utils.auth import (
+from service.service import (
+    get_user_profile_info,
+    update_profile,
+)
+from src.schemas.user_info import UserInfo, UserProfileInfo, SuccessResponse
+from src.schemas.user_info_in import UserProfileInfoIn
+from src.utils.auth import (
     get_current_auth_user_from_cookie,
     get_current_auth_user_from_refresh,
 )
@@ -12,7 +16,54 @@ from utils.auth import (
 router = APIRouter(prefix="/profile", tags=["Profile_operation"])
 
 
-@router.post("/post")
+@router.get("/my_info/", status_code=status.HTTP_200_OK, response_model=UserProfileInfo)
+async def get_my_info(
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.delete_cookie(key="users_access_token", domain="localhost")
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        return await get_user_profile_info(user_id=current_user["user_info"]["id"])
+    else:
+        return await get_user_profile_info(user_id=current_user["id"])
+
+
+@router.patch(
+    "/modify_my_info/",
+    status_code=status.HTTP_200_OK,
+    response_model=SuccessResponse,
+)
+async def modify_my_info(
+    response: Response,
+    request: Request,
+    new_data: UserProfileInfoIn,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.delete_cookie(key="users_access_token", domain="localhost")
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        new_data = new_data.model_dump(exclude_none=True)
+        return await update_profile(
+            user_id=current_user["user_info"]["id"], profile_data=new_data
+        )
+    else:
+        new_data = new_data.model_dump(exclude_none=True)
+        return await update_profile(user_id=current_user["id"], profile_data=new_data)
+
+
+@router.post("/post/", status_code=status.HTTP_200_OK, response_model=SuccessResponse)
 async def create_post(
     response: Response,
     request: Request,
@@ -27,6 +78,6 @@ async def create_post(
             value=current_user["access_token"],
             httponly=True,
         )
-        return {"post_data": post_data, "current_user": current_user}
+        return {"success": True, "post_data": post_data, "current_user": current_user}
     else:
-        return {"post_data": post_data, "current_user": current_user}
+        return {"success": True, "post_data": post_data, "current_user": current_user}

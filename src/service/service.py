@@ -1,8 +1,11 @@
 import bcrypt
-from sqlalchemy import select
+import uuid
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select, update
 from src.database import async_session_factory
 from src.schemas.authin import UserRegisterIn
-from src.models.models import User, UserProtect
+from src.models.models import User, UserProtect, UserProfile
+from errors import Errors
 
 
 async def get_user_id(user_login: str):
@@ -19,6 +22,14 @@ async def get_user_data(user_login: str):
         res = await session.execute(stmt1)
         user_data = res.scalar()
         return user_data
+
+
+async def get_user_profile_info(user_id: int):
+    async with async_session_factory() as session:
+        stmt = select(UserProfile).where(UserProfile.user_id == user_id)
+        res = await session.execute(stmt)
+        profile_data = res.scalar()
+        return profile_data
 
 
 async def get_user_auth_info(login: str):
@@ -38,22 +49,45 @@ async def get_user_auth_info(login: str):
 
 async def create_user(new_user: UserRegisterIn):
     async with async_session_factory() as session:
-        data1 = new_user.model_dump(include={"login", "phone", "email"})
-        stmt1 = User(**data1)
-        session.add(stmt1)
-        await session.flush()
-        await session.commit()
-        user_id = await get_user_id(data1["login"])
-        data2 = new_user.model_dump(
-            include={"long_hashed_password", "short_hashed_password"}
+        try:
+            data1 = new_user.model_dump(include={"login", "phone", "email"})
+            stmt1 = User(**data1)
+            session.add(stmt1)
+            await session.flush()
+            await session.commit()
+            user_id = await get_user_id(data1["login"])
+            data2 = new_user.model_dump(
+                include={"long_hashed_password", "short_hashed_password"}
+            )
+            data2["user_id"] = user_id
+            data2["long_hashed_password"] = hash_password(data2["long_hashed_password"])
+            stmt2 = UserProtect(**data2)
+            stmt3 = UserProfile(
+                user_id=user_id,
+                nickname="user" + str(uuid.uuid4().time),
+            )
+            session.add_all([stmt2, stmt3])
+            await session.flush()
+            await session.commit()
+            return {"success": True}
+        except IntegrityError:
+            raise Errors.duplicate
+
+
+async def update_profile(user_id: int, profile_data: dict):
+    async with async_session_factory() as session:
+        # data = profile_data.model_dump(exclude_none=True, exclude_unset=True)
+        # print(data)
+        # new_data = UserProfile(**data)
+        stmt = (
+            update(UserProfile)
+            .where(UserProfile.user_id == user_id)
+            .values(profile_data)
         )
-        data2["user_id"] = user_id
-        data2["long_hashed_password"] = hash_password(data2["long_hashed_password"])
-        stmt2 = UserProtect(**data2)
-        session.add(stmt2)
+        await session.execute(stmt)
         await session.flush()
         await session.commit()
-        return {"success": True}
+        return {"success": True, "changed": True}
 
 
 def hash_password(password: str) -> bytes:
