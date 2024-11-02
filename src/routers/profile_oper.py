@@ -1,11 +1,12 @@
-from fastapi import Depends, APIRouter, status
+from pathlib import Path
+import re
+from fastapi import Depends, APIRouter, status, File, UploadFile
+import os
+import shutil
 from jwt import ExpiredSignatureError
 from starlette.requests import Request
 from starlette.responses import Response
-from service.service import (
-    get_user_profile_info,
-    update_profile,
-)
+from service.service import get_user_profile_info, update_profile, add_avatar_link
 from src.schemas.user_info import UserInfo, UserProfileInfo, SuccessResponse
 from src.schemas.user_info_in import UserProfileInfoIn
 from src.utils.auth import (
@@ -24,7 +25,7 @@ async def get_my_info(
 ):
     if current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
-        response.delete_cookie(key="users_access_token", domain="localhost")
+        # response.delete_cookie(key="users_access_token", domain="localhost")
         response.set_cookie(
             key="users_access_token",
             value=current_user["access_token"],
@@ -48,7 +49,7 @@ async def modify_my_info(
 ):
     if current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
-        response.delete_cookie(key="users_access_token", domain="localhost")
+        # response.delete_cookie(key="users_access_token", domain="localhost")
         response.set_cookie(
             key="users_access_token",
             value=current_user["access_token"],
@@ -72,7 +73,7 @@ async def create_post(
 ):
     if current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
-        response.delete_cookie(key="users_access_token", domain="localhost")
+        # response.delete_cookie(key="users_access_token", domain="localhost")
         response.set_cookie(
             key="users_access_token",
             value=current_user["access_token"],
@@ -81,3 +82,44 @@ async def create_post(
         return {"success": True, "post_data": post_data, "current_user": current_user}
     else:
         return {"success": True, "post_data": post_data, "current_user": current_user}
+
+
+@router.post("/upload_avatar/", status_code=status.HTTP_200_OK)
+async def upload_avatar(
+    response: Response,
+    request: Request,
+    avatar: UploadFile,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        # response.delete_cookie(key="users_access_token", domain="localhost")
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+
+        avatars_dir = (
+            Path(__file__).parent.parent.parent
+            / f"Files/Avatars/{avatar.filename.replace(avatar.filename,
+                                                           f"user_{current_user["user_info"]["id"]}_avatar.{(re.search(r"(jpeg)|(png)", avatar.content_type)).group()}")}"
+        )
+
+        with open(avatars_dir, "wb") as buffer:
+            shutil.copyfileobj(avatar.file, buffer)
+        await add_avatar_link(
+            user_id=current_user["user_info"]["id"], avatar_link=str(avatars_dir)
+        )
+        return {"success": True, "avatar_link": avatars_dir}
+    else:
+        avatars_dir = (
+            Path(__file__).parent.parent.parent
+            / f"Files/Avatars/{avatar.filename.replace(avatar.filename,
+                                                           f"user_{current_user["id"]}_avatar.{(re.search(r"(jpeg)|(png)", avatar.content_type)).group()}")}"
+        )
+
+        with open(avatars_dir, "wb") as buffer:
+            shutil.copyfileobj(avatar.file, buffer)
+        await add_avatar_link(user_id=current_user["id"], avatar_link=str(avatars_dir))
+        return {"success": True, "avatar_link": avatars_dir}

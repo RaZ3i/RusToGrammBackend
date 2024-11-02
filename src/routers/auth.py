@@ -32,7 +32,7 @@ async def registration(
     return result
 
 
-@router.post("/login/", status_code=status.HTTP_200_OK, response_model=UserAuthLoginOut)
+@router.post("/login/", status_code=status.HTTP_200_OK)
 async def login(
     response: Response, user_data: UserAuthLoginIn = Depends(validate_auth_user)
 ):
@@ -42,6 +42,7 @@ async def login(
     response.set_cookie(
         key="users_access_token",
         value=access_token,
+        domain="127.0.0.1",
         httponly=True,
     )
     return {

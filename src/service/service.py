@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import bcrypt
 import uuid
 from sqlalchemy.exc import IntegrityError
@@ -83,6 +85,19 @@ async def update_profile(user_id: int, profile_data: dict):
             update(UserProfile)
             .where(UserProfile.user_id == user_id)
             .values(profile_data)
+        )
+        await session.execute(stmt)
+        await session.flush()
+        await session.commit()
+        return {"success": True, "changed": True}
+
+
+async def add_avatar_link(user_id: int, avatar_link: str):
+    async with async_session_factory() as session:
+        stmt = (
+            update(UserProfile)
+            .where(UserProfile.user_id == user_id)
+            .values(avatar_link=avatar_link)
         )
         await session.execute(stmt)
         await session.flush()
