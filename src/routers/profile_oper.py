@@ -1,11 +1,10 @@
 from pathlib import Path
 import re
-from fastapi import Depends, APIRouter, status, File, UploadFile
-import os
+from fastapi import Depends, APIRouter, status, UploadFile
 import shutil
 from jwt import ExpiredSignatureError
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import Response, FileResponse
 from service.service import get_user_profile_info, update_profile, add_avatar_link
 from src.schemas.user_info import UserInfo, UserProfileInfo, SuccessResponse
 from src.schemas.user_info_in import UserProfileInfoIn
@@ -17,7 +16,11 @@ from src.utils.auth import (
 router = APIRouter(prefix="/profile", tags=["Profile_operation"])
 
 
-@router.get("/my_info/", status_code=status.HTTP_200_OK, response_model=UserProfileInfo)
+@router.get(
+    "/my_info/",
+    status_code=status.HTTP_200_OK,
+    response_model=UserProfileInfo,
+)
 async def get_my_info(
     response: Response,
     request: Request,
@@ -31,9 +34,11 @@ async def get_my_info(
             value=current_user["access_token"],
             httponly=True,
         )
-        return await get_user_profile_info(user_id=current_user["user_info"]["id"])
+        info = await get_user_profile_info(user_id=current_user["user_info"]["id"])
+        return info
     else:
-        return await get_user_profile_info(user_id=current_user["id"])
+        info = await get_user_profile_info(user_id=current_user["id"])
+        return info
 
 
 @router.patch(
@@ -123,3 +128,19 @@ async def upload_avatar(
             shutil.copyfileobj(avatar.file, buffer)
         await add_avatar_link(user_id=current_user["id"], avatar_link=str(avatars_dir))
         return {"success": True, "avatar_link": avatars_dir}
+
+
+@router.get("/get_user_info_by_id/{user_id}", status_code=status.HTTP_200_OK)
+async def get_user_info_by_id(
+    user_id: int,
+):
+    info = await get_user_profile_info(user_id=user_id)
+    return {"user_profile": info, "avatar": FileResponse(path=info.avatar_link)}
+
+
+@router.get("/get_avatar_by_id/{user_id}", status_code=status.HTTP_200_OK)
+async def get_avatar_by_id(
+    user_id: int,
+):
+    info = await get_user_profile_info(user_id=user_id)
+    return FileResponse(path=info.avatar_link)
