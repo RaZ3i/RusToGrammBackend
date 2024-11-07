@@ -1,17 +1,30 @@
 from pathlib import Path
 import re
+from typing import Annotated
+
+
 from fastapi import Depends, APIRouter, status, UploadFile
 import shutil
 from jwt import ExpiredSignatureError
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
-from service.service import get_user_profile_info, update_profile, add_avatar_link
-from src.schemas.user_info import UserInfo, UserProfileInfo, SuccessResponse
+from service.service import (
+    get_user_profile_info,
+    update_profile,
+    add_avatar_link,
+    get_users_lists,
+)
+from src.schemas.user_info import (
+    UserInfo,
+    UserProfileInfo,
+    SuccessResponse,
+)
 from src.schemas.user_info_in import UserProfileInfoIn
 from src.utils.auth import (
     get_current_auth_user_from_cookie,
     get_current_auth_user_from_refresh,
 )
+from utils.pagination import Pagination, pagination_params
 
 router = APIRouter(prefix="/profile", tags=["Profile_operation"])
 
@@ -60,12 +73,12 @@ async def modify_my_info(
             value=current_user["access_token"],
             httponly=True,
         )
-        new_data = new_data.model_dump(exclude_none=True)
+        new_data = new_data.model_dump(exclude_none=True, exclude_unset=True)
         return await update_profile(
             user_id=current_user["user_info"]["id"], profile_data=new_data
         )
     else:
-        new_data = new_data.model_dump(exclude_none=True)
+        new_data = new_data.model_dump(exclude_none=True, exclude_unset=True)
         return await update_profile(user_id=current_user["id"], profile_data=new_data)
 
 
@@ -144,3 +157,43 @@ async def get_avatar_by_id(
 ):
     info = await get_user_profile_info(user_id=user_id)
     return FileResponse(path=info.avatar_link)
+
+
+# @router.get(
+#     "/users_list/",
+#     status_code=status.HTTP_200_OK,
+#     response_model=list[UserProfileInfo],
+#     response_model_exclude_none=True,
+# )
+# async def get_users_list(user_id: int):
+#     users_list = await get_users_lists(user_id=user_id)
+#     return users_list
+
+
+@router.get(
+    "/users_list/", status_code=status.HTTP_200_OK, response_model=list[UserProfileInfo]
+)
+async def get_users(
+    pagination: Annotated[Pagination, Depends(pagination_params)],
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        users_list = await get_users_lists(
+            user_id=current_user["user_info"]["id"],
+            perpage=pagination.perPage,
+            page=pagination.page,
+        )
+        return users_list
+    else:
+        users_list = await get_users_lists(
+            user_id=current_user["id"], perpage=pagination.perPage, page=pagination.page
+        )
+        return users_list

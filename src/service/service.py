@@ -105,6 +105,26 @@ async def add_avatar_link(user_id: int, avatar_link: str):
         return {"success": True, "changed": True}
 
 
+async def get_users_lists(user_id: int, perpage: int, page: int):
+    async with async_session_factory() as session:
+        stmt = (
+            select(
+                UserProfile.user_id,
+                UserProfile.user_name,
+                UserProfile.nickname,
+                UserProfile.description,
+                UserProfile.avatar_link,
+            )
+            .where(UserProfile.user_id != user_id)
+            .limit(perpage)
+            .offset(page - 1 if page == 1 else (page - 1) * perpage)
+        )
+        res = await session.execute(stmt)
+        user_list = res.mappings().fetchmany()
+        # count = await session.execute()
+        return user_list
+
+
 def hash_password(password: str) -> bytes:
     salt = bcrypt.gensalt()
     pwd_bytes: bytes = password.encode()

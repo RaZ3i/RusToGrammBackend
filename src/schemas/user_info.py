@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing_extensions import TypedDict
 
 
 class UserInfo(BaseModel):
@@ -12,16 +13,16 @@ class UserProfileInfo(BaseModel):
     user_name: str | None = None
     description: str | None = None
     nickname: str
-    private_account: bool
+    private_account: bool | None = None
     avatar_link: str | None = None
-
-
-class SuccessResponse(BaseModel):
-    success: bool
-    changed: bool
 
 
 class UserRefreshTokenData(BaseModel):
     user_id_refresh: int
     token_id: str
     refresh_token: str
+
+
+class SuccessResponse(BaseModel):
+    success: bool
+    changed: bool
