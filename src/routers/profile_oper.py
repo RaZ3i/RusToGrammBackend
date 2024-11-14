@@ -296,7 +296,7 @@ async def get_subscribers_list(
     response_model=SubCount,
     status_code=status.HTTP_200_OK,
 )
-async def get_subscribes_count(
+async def get_subscribers_count(
     response: Response,
     request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
