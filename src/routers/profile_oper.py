@@ -13,11 +13,18 @@ from service.service import (
     update_profile,
     add_avatar_link,
     get_users_lists,
+    subscribe,
+    get_subscribes,
+    get_subscribers,
+    subscribers_count,
+    subscribes_count,
 )
 from src.schemas.user_info import (
     UserInfo,
     UserProfileInfo,
+    UserForSubList,
     SuccessResponse,
+    SubCount,
 )
 from src.schemas.user_info_in import UserProfileInfoIn
 from src.utils.auth import (
@@ -159,17 +166,6 @@ async def get_avatar_by_id(
     return FileResponse(path=info.avatar_link)
 
 
-# @router.get(
-#     "/users_list/",
-#     status_code=status.HTTP_200_OK,
-#     response_model=list[UserProfileInfo],
-#     response_model_exclude_none=True,
-# )
-# async def get_users_list(user_id: int):
-#     users_list = await get_users_lists(user_id=user_id)
-#     return users_list
-
-
 @router.get(
     "/users_list/", status_code=status.HTTP_200_OK, response_model=list[UserProfileInfo]
 )
@@ -197,3 +193,123 @@ async def get_users(
             user_id=current_user["id"], perpage=pagination.perPage, page=pagination.page
         )
         return users_list
+
+
+@router.post("/subscribe_at/{sub_id}", status_code=status.HTTP_200_OK)
+async def subscribe_at(
+    sub_id: int,
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        res = await subscribe(
+            user_id=current_user["user_info"]["id"], subscribe_id=sub_id
+        )
+        return res
+    else:
+        res = await subscribe(user_id=current_user["id"], subscribe_id=sub_id)
+        return res
+
+
+# Убрать current_user позже и сделать чтобы функция просто принимала user_id
+@router.get(
+    "/subscribes_list/",
+    response_model=list[UserForSubList],
+    status_code=status.HTTP_200_OK,
+)
+async def get_subscribes_list(
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        users_list = await get_subscribes(user_id=current_user["user_info"]["id"])
+        return users_list
+    else:
+        users_list = await get_subscribes(user_id=current_user["id"])
+        return users_list
+
+
+@router.get(
+    "/subscribes_count/",
+    response_model=SubCount,
+    status_code=status.HTTP_200_OK,
+)
+async def get_subscribes_count(
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        count = await subscribes_count(user_id=current_user["user_info"]["id"])
+        return count
+    else:
+        count = await subscribes_count(user_id=current_user["id"])
+        return count
+
+
+@router.get(
+    "/subscribers_list/",
+    response_model=list[UserForSubList],
+    status_code=status.HTTP_200_OK,
+)
+async def get_subscribers_list(
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        users_list = await get_subscribers(user_id=current_user["user_info"]["id"])
+        return users_list
+    else:
+        users_list = await get_subscribers(user_id=current_user["id"])
+        return users_list
+
+
+@router.get(
+    "/subscribers_count/",
+    response_model=SubCount,
+    status_code=status.HTTP_200_OK,
+)
+async def get_subscribes_count(
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        count = await subscribers_count(user_id=current_user["user_info"]["id"])
+        return count
+    else:
+        count = await subscribers_count(user_id=current_user["id"])
+        return count

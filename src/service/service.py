@@ -4,9 +4,17 @@ import bcrypt
 import uuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, update
+from sqlalchemy.sql.functions import count
+
 from src.database import async_session_factory
 from src.schemas.authin import UserRegisterIn
-from src.models.models import User, UserProtect, UserProfile
+from src.models.models import (
+    User,
+    UserProtect,
+    UserProfile,
+    UserSubscribes,
+    UserSubscribers,
+)
 from errors import Errors
 
 
@@ -66,6 +74,7 @@ async def create_user(new_user: UserRegisterIn):
             stmt2 = UserProtect(**data2)
             stmt3 = UserProfile(
                 user_id=user_id,
+                user_profile_id=user_id,
                 nickname="user" + str(uuid.uuid4().time),
             )
             session.add_all([stmt2, stmt3])
@@ -123,6 +132,94 @@ async def get_users_lists(user_id: int, perpage: int, page: int):
         user_list = res.mappings().fetchmany()
         # count = await session.execute()
         return user_list
+
+
+async def subscribe(user_id: int, subscribe_id: int):
+    async with async_session_factory() as session:
+        data = {"user_id": user_id, "subscribes_id": subscribe_id}
+        stmt = UserSubscribes(**data)
+        session.add(stmt)
+        await add_to_subscribers_table(user_id=subscribe_id, subscriber_id=user_id)
+        await session.flush()
+        await session.commit()
+    return {"success": True}
+
+
+async def get_subscribes(user_id: int):
+    async with async_session_factory() as session:
+        stmt = (
+            select(UserProfile.user_id, UserProfile.nickname, UserProfile.avatar_link)
+            .join_from(
+                UserSubscribes,
+                UserProfile,
+                UserSubscribes.subscribes_id == UserProfile.user_id,
+            )
+            .where(UserSubscribes.user_id == user_id)
+        )
+        data = await session.execute(stmt)
+        res = data.mappings().fetchmany()
+    return res
+
+
+async def subscribes_count(user_id: int):
+    async with async_session_factory() as session:
+        stmt = (
+            select(UserProfile.user_id)
+            .join_from(
+                UserSubscribes,
+                UserProfile,
+                UserSubscribes.subscribes_id == UserProfile.user_id,
+            )
+            .where(UserSubscribes.user_id == user_id)
+        )
+        data = await session.execute(stmt)
+        res = data.mappings().fetchmany()
+    return {"count": len(res), "success": True}
+
+
+async def get_subscribers(user_id: int):
+    async with async_session_factory() as session:
+        stmt = (
+            select(UserProfile.user_id, UserProfile.nickname, UserProfile.avatar_link)
+            .join_from(
+                UserSubscribers,
+                UserProfile,
+                UserSubscribers.subscribers_id == UserProfile.user_id,
+            )
+            .where(UserSubscribers.user_id == user_id)
+        )
+        data = await session.execute(stmt)
+        res = data.mappings().fetchmany()
+    return res
+
+
+async def subscribers_count(user_id: int):
+    async with async_session_factory() as session:
+        stmt = (
+            select(UserProfile.user_id)
+            .join_from(
+                UserSubscribers,
+                UserProfile,
+                UserSubscribers.subscribers_id == UserProfile.user_id,
+            )
+            .where(UserSubscribers.user_id == user_id)
+        )
+        data = await session.execute(stmt)
+        res = data.mappings().fetchmany()
+    return {"count": len(res), "success": True}
+
+
+async def add_to_subscribers_table(user_id: int, subscriber_id: int):
+    async with async_session_factory() as session:
+        data = {"user_id": user_id, "subscribers_id": subscriber_id}
+        stmt = UserSubscribers(**data)
+        session.add(stmt)
+        await session.flush()
+        await session.commit()
+    return {"success": True}
+
+
+# PASSWORD OPERATION
 
 
 def hash_password(password: str) -> bytes:

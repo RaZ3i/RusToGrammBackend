@@ -17,6 +17,17 @@ class UserProfileInfo(BaseModel):
     avatar_link: str | None = None
 
 
+class SubCount(BaseModel):
+    count: int
+    success: bool
+
+
+class UserForSubList(BaseModel):
+    user_id: int
+    nickname: str
+    avatar_link: str | None = None
+
+
 class UserRefreshTokenData(BaseModel):
     user_id_refresh: int
     token_id: str

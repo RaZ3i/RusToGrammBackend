@@ -54,12 +54,50 @@ class UserProfile(Base):
     __tablename__ = "users_profiles"
     id: Mapped[intpk]
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_profile_id: Mapped[int] = mapped_column(nullable=False, unique=True)
     user_name: Mapped[str] = mapped_column(nullable=True)
     nickname: Mapped[str] = mapped_column(nullable=True)
     description: Mapped[str] = mapped_column(String(150), nullable=True)
     avatar_link: Mapped[str] = mapped_column(nullable=True)
     private_account: Mapped[bool] = mapped_column(default=True)
 
-    # user: Mapped[relationship("User")] = relationship(
-    #     back_populates="user_profile", single_parent=True
+    # user_subscribers: Mapped[relationship("UserSubscribes")] = relationship(
+    #     back_populates="users"
+    # )
+    # #
+    # user_subscribers: Mapped[relationship("UserSubscribers")] = relationship(
+    #     back_populates="user_profile",
+    #     primaryjoin="and_UserProfile.id ==  UserSubscribers.user_id",
+    # )
+
+
+class UserSubscribers(Base):
+    __tablename__ = "user_subscribers"
+    id: Mapped[intpk]
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users_profiles.id", ondelete="CASCADE")
+    )
+    subscribers_id: Mapped[int]
+    sub_date: Mapped[datetime.datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())")
+    )
+    #
+    # user_profile: Mapped[relationship("UserProfile")] = relationship(
+    #     back_populates="user_subscribers",
+    # )
+
+
+class UserSubscribes(Base):
+    __tablename__ = "user_subscribes"
+    id: Mapped[intpk]
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users_profiles.id", ondelete="CASCADE")
+    )
+    subscribes_id: Mapped[int]
+    sub_date: Mapped[datetime.datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())")
+    )
+
+    # subscribes: Mapped[relationship("UserProfile")] = relationship(
+    #     back_populates="user_subscribes"
     # )
