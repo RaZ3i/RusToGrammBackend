@@ -1,8 +1,7 @@
 from pathlib import Path
 import re
-from typing import Annotated
-
-
+from typing import Annotated, List
+import os
 from fastapi import Depends, APIRouter, status, UploadFile
 import shutil
 from jwt import ExpiredSignatureError
@@ -26,7 +25,7 @@ from src.schemas.user_info import (
     SuccessResponse,
     SubCount,
 )
-from src.schemas.user_info_in import UserProfileInfoIn
+from src.schemas.user_info_in import UserProfileInfoIn, PostData
 from src.utils.auth import (
     get_current_auth_user_from_cookie,
     get_current_auth_user_from_refresh,
@@ -74,7 +73,6 @@ async def modify_my_info(
 ):
     if current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
-        # response.delete_cookie(key="users_access_token", domain="localhost")
         response.set_cookie(
             key="users_access_token",
             value=current_user["access_token"],
@@ -98,7 +96,6 @@ async def create_post(
 ):
     if current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
-        # response.delete_cookie(key="users_access_token", domain="localhost")
         response.set_cookie(
             key="users_access_token",
             value=current_user["access_token"],
@@ -118,7 +115,6 @@ async def upload_avatar(
 ):
     if current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
-        # response.delete_cookie(key="users_access_token", domain="localhost")
         response.set_cookie(
             key="users_access_token",
             value=current_user["access_token"],
@@ -313,3 +309,59 @@ async def get_subscribers_count(
     else:
         count = await subscribers_count(user_id=current_user["id"])
         return count
+
+
+@router.post("/create_post/", status_code=status.HTTP_201_CREATED)
+async def post(
+    # post_data: PostData,
+    files: list[UploadFile] | UploadFile,
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        post_dir = f"../Files/Photos/{current_user["user_info"]["id"]}"
+        os.makedirs(post_dir)
+        for file in files:
+            print(file.filename)
+            file.filename = f"file_{current_user["user_info"]["id"]}_{file.size}.{(re.search(r"(jpeg)|(png)", file.content_type)).group()}"
+            with open(post_dir + "/" + file.filename, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+        return True
+
+    else:
+        post_dir = f"../Files/Photos/{current_user["id"]}"
+        os.makedirs(post_dir)
+        for file in files:
+            print(file.filename)
+            file.filename = f"file_{current_user["id"]}_{file.size}.{(re.search(r"(jpeg)|(png)", file.content_type)).group()}"
+            with open(post_dir + "/" + file.filename, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+
+#     photos_dir = (
+#         Path(__file__).parent.parent.parent
+#         / f"Files/Photos/{photos.filename.replace(photos.filename,
+#                                                       f"user_{current_user["user_info"]["id"]}_avatar.{(re.search(r"(jpeg)|(png)", photos.content_type)).group()}")}"
+#     )
+#
+#     with open(photos_dir, "wb") as buffer:
+#         shutil.copyfileobj(photos.file, buffer)
+#     return {"success": True, "photos_link": photos_dir}
+# else:
+#     photos_dir = (
+#         Path(__file__).parent.parent.parent
+#         / f"Files/Photos/{photos.filename.replace(photos.filename,
+#                                                       f"user_{current_user["id"]}_avatar.{(re.search(r"(jpeg)|(png)", photos.content_type)).group()}")}"
+#     )
+#
+#     with open(photos_dir, "wb") as buffer:
+#         shutil.copyfileobj(photos.file, buffer)
+#     await add_avatar_link(user_id=current_user["id"], avatar_link=str(photos_dir))
+#     return {"success": True, "photos_link": photos_dir}

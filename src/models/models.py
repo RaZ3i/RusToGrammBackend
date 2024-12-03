@@ -101,3 +101,19 @@ class UserSubscribes(Base):
     # subscribes: Mapped[relationship("UserProfile")] = relationship(
     #     back_populates="user_subscribes"
     # )
+
+
+class Posts(Base):
+    __tablename__ = "users_posts"
+    id: Mapped[intpk]
+    post_id: Mapped[int]
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users_profiles.id", ondelete="CASCADE")
+    )
+    desscription: Mapped[str] = mapped_column(String(20), nullable=True)
+    file_name: Mapped[str]
+    file_link: Mapped[str]
+    file_weight: Mapped[bytes]
+    posted_at: Mapped[datetime.datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())")
+    )
