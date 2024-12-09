@@ -106,14 +106,23 @@ class UserSubscribes(Base):
 class Posts(Base):
     __tablename__ = "users_posts"
     id: Mapped[intpk]
-    post_id: Mapped[int]
+    post_id: Mapped[str]
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users_profiles.id", ondelete="CASCADE")
     )
-    desscription: Mapped[str] = mapped_column(String(20), nullable=True)
-    file_name: Mapped[str]
-    file_link: Mapped[str]
-    file_weight: Mapped[bytes]
+    desscription: Mapped[str] = mapped_column(String(2200), nullable=True)
     posted_at: Mapped[datetime.datetime] = mapped_column(
         server_default=text("TIMEZONE('utc', now())")
     )
+
+
+class Photos(Base):
+    __tablename__ = "users_photos"
+    id: Mapped[intpk]
+    post_id_fkey: Mapped[int] = mapped_column(
+        ForeignKey("users_posts.id", ondelete="CASCADE")
+    )
+    post_id: Mapped[str]
+    file_name: Mapped[str]
+    file_link: Mapped[str]
+    file_weight: Mapped[int]

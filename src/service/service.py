@@ -2,6 +2,8 @@ from pathlib import Path
 
 import bcrypt
 import uuid
+
+from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, update
 from sqlalchemy.sql.functions import count
@@ -14,6 +16,8 @@ from src.models.models import (
     UserProfile,
     UserSubscribes,
     UserSubscribers,
+    Posts,
+    Photos,
 )
 from errors import Errors
 
@@ -216,6 +220,43 @@ async def add_to_subscribers_table(user_id: int, subscriber_id: int):
         session.add(stmt)
         await session.flush()
         await session.commit()
+    return {"success": True}
+
+
+async def add_post(
+    post_id: str,
+    user_id: int,
+    description: str,
+    files: list[UploadFile],
+    file_link: list[str],
+):
+    async with async_session_factory() as session:
+        data1 = {
+            "post_id": post_id,
+            "user_id": user_id,
+            "desscription": description,
+        }
+        stmt1 = Posts(**data1)
+        session.add(stmt1)
+        await session.flush()
+        await session.commit()
+        stmt2 = select(Posts.id).where(Posts.post_id == post_id)
+        data = await session.execute(stmt2)
+        post_id_fkey = data.scalar()
+        for file in files:
+            i = 0
+            data2 = {
+                "post_id_fkey": post_id_fkey,
+                "post_id": post_id,
+                "file_name": file.filename,
+                "file_link": file_link[i],
+                "file_weight": file.size,
+            }
+            stmt3 = Photos(**data2)
+            session.add(stmt3)
+            await session.flush()
+            await session.commit()
+            i += 1
     return {"success": True}
 
 
