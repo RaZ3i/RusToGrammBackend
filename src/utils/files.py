@@ -6,7 +6,6 @@ from fastapi import UploadFile
 
 
 def add_new_file(files: list[UploadFile], post_id: str):
-    print(len(files))
     try:
         if len(files) > 10:
             raise ValueError("максимум 10 фотографий")
@@ -23,4 +22,4 @@ def add_new_file(files: list[UploadFile], post_id: str):
                 shutil.copyfileobj(file.file, buffer)
         return {"success": True, "links": links}
     except ValueError as error:
-        return {"success": False, "msg": error}
+        return {"success": False, "msg": error.args}

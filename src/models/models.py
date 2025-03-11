@@ -115,6 +115,8 @@ class Posts(Base):
         server_default=text("TIMEZONE('utc', now())")
     )
 
+    photos: Mapped["Photos"] = relationship(back_populates="posts")
+
 
 class Photos(Base):
     __tablename__ = "users_photos"
@@ -126,3 +128,30 @@ class Photos(Base):
     file_name: Mapped[str]
     file_link: Mapped[str]
     file_weight: Mapped[int]
+
+    posts: Mapped["Posts"] = relationship(back_populates="photos")
+
+
+class Comments(Base):
+    __tablename__ = "post_comments"
+    id: Mapped[intpk]
+    post_id: Mapped[int] = mapped_column(
+        ForeignKey("users_posts.id", ondelete="CASCADE")
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users_profiles.id"))
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())")
+    )
+    comment_text: Mapped[str] = mapped_column(String(1000), nullable=False)
+
+
+class Likes(Base):
+    __tablename__ = "post_likes"
+    id: Mapped[intpk]
+    post_id: Mapped[int] = mapped_column(
+        ForeignKey("users_posts.id", ondelete="CASCADE")
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users_profiles.id"))
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())")
+    )

@@ -10,6 +10,11 @@ class UserProfileInfoIn(BaseModel):
     # avatar_link: str
 
 
-class PostData(BaseModel):
+class CommentData(BaseModel):
+    post_id: int
+    text: str
+
+
+class LikeData(BaseModel):
+    post_id: int
     user_id: int
-    description: str

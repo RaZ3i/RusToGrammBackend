@@ -8,12 +8,14 @@ from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
-from schemas.user_info_in import UserProfileInfoIn
+from schemas.user_info_in import UserProfileInfoIn, CommentData, LikeData
 from service.service import (
     add_avatar_link,
     subscribe,
     add_post,
     update_profile,
+    create_comment_post,
+    like_post,
 )
 from src.schemas.user_info import (
     UserInfo,
@@ -109,8 +111,8 @@ async def post(
         )
         post_id = str(uuid.uuid4())
         arr_link = add_new_file(files=files, post_id=post_id)
-        # print(arr_link)
-        if arr_link["success"]:
+        print(arr_link)
+        if arr_link["success"] is True:
             res = await add_post(
                 post_id=post_id,
                 user_id=current_user["user_info"]["id"],
@@ -124,14 +126,17 @@ async def post(
     else:
         post_id = str(uuid.uuid4())
         arr_link = add_new_file(files=files, post_id=post_id)
-        res = await add_post(
-            post_id=post_id,
-            user_id=current_user["id"],
-            description=description,
-            files=files,
-            file_link=arr_link,
-        )
-        return res
+        if arr_link["success"] is True:
+            res = await add_post(
+                post_id=post_id,
+                user_id=current_user["id"],
+                description=description,
+                files=files,
+                file_link=arr_link["links"],
+            )
+            return res
+        else:
+            return arr_link
 
 
 @router.patch(
@@ -161,20 +166,53 @@ async def modify_my_info(
         return await update_profile(user_id=current_user["id"], profile_data=new_data)
 
 
-# @router.post("/post/", status_code=status.HTTP_200_OK, response_model=SuccessResponse)
-# async def create_post(
-#     response: Response,
-#     request: Request,
-#     post_data: str,
-#     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
-# ):
-#     if current_user == ExpiredSignatureError:
-#         current_user = await get_current_auth_user_from_refresh(request=request)
-#         response.set_cookie(
-#             key="users_access_token",
-#             value=current_user["access_token"],
-#             httponly=True,
-#         )
-#         return {"success": True, "post_data": post_data, "current_user": current_user}
-#     else:
-#         return {"success": True, "post_data": post_data, "current_user": current_user}
+@router.post("/comment_post/")
+async def create_comment(
+    response: Response,
+    request: Request,
+    comment_data: CommentData,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        return await create_comment_post(
+            post_id=comment_data.post_id,
+            user_id=current_user["user_info"]["id"],
+            comment_text=comment_data.text,
+        )
+    else:
+        return await create_comment_post(
+            post_id=comment_data.post_id,
+            user_id=current_user["id"],
+            comment_text=comment_data.text,
+        )
+
+
+@router.post("/post_like/")
+async def post_like(
+    response: Response,
+    request: Request,
+    post_id: int,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        return await like_post(
+            post_id=post_id,
+            user_id=current_user["user_info"]["id"],
+        )
+    else:
+        return await like_post(
+            post_id=post_id,
+            user_id=current_user["id"],
+        )

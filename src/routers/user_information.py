@@ -15,6 +15,8 @@ from service.service import (
     get_subscribers,
     subscribers_count,
     get_users_lists,
+    get_users_posts,
+    get_comments_post,
 )
 from utils.auth import (
     get_current_auth_user_from_cookie,
@@ -192,3 +194,15 @@ async def get_users(
             user_id=current_user["id"], perpage=pagination.perPage, page=pagination.page
         )
         return users_list
+
+
+@router.get("/user_posts/", status_code=status.HTTP_200_OK)
+async def get_posts(user_id: int):
+    res = await get_users_posts(user_id=user_id)
+    return res
+
+
+@router.get("/comments_post/", status_code=status.HTTP_200_OK)
+async def get_comments(post_id: int):
+    res = await get_comments_post(post_id=post_id)
+    return res

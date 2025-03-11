@@ -5,8 +5,9 @@ import uuid
 
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select, update
-from sqlalchemy.sql.functions import count
+from sqlalchemy import select, update, delete
+from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.sql.functions import count, func
 
 from src.database import async_session_factory
 from src.schemas.authin import UserRegisterIn
@@ -18,6 +19,8 @@ from src.models.models import (
     UserSubscribers,
     Posts,
     Photos,
+    Comments,
+    Likes,
 )
 from errors import Errors
 
@@ -243,8 +246,8 @@ async def add_post(
         stmt2 = select(Posts.id).where(Posts.post_id == post_id)
         data = await session.execute(stmt2)
         post_id_fkey = data.scalar()
+        i = 0
         for file in files:
-            i = 0
             data2 = {
                 "post_id_fkey": post_id_fkey,
                 "post_id": post_id,
@@ -252,12 +255,87 @@ async def add_post(
                 "file_link": file_link[i],
                 "file_weight": file.size,
             }
+            i += 1
             stmt3 = Photos(**data2)
             session.add(stmt3)
             await session.flush()
-            await session.commit()
-            i += 1
+        await session.commit()
     return {"success": True}
+
+
+async def create_comment_post(post_id: int, user_id: int, comment_text: str):
+    async with async_session_factory() as session:
+        data = {
+            "post_id": post_id,
+            "user_id": user_id,
+            "comment_text": comment_text,
+        }
+        stmt = Comments(**data)
+        session.add(stmt)
+        await session.flush()
+        await session.commit()
+    return {"success": True}
+
+
+async def get_comments_post(post_id: int):
+    async with async_session_factory() as session:
+        stmt = (
+            select(
+                Comments.post_id,
+                Comments.comment_text,
+                UserProfile.user_id,
+                UserProfile.nickname,
+                UserProfile.avatar_link,
+            )
+            .join_from(Comments, UserProfile, Comments.user_id == UserProfile.user_id)
+            .where(Comments.post_id == post_id)
+        )
+        data = await session.execute(stmt)
+        res = data.mappings().fetchmany()
+    return res
+
+
+async def get_users_posts(user_id: int):
+    async with async_session_factory() as session:
+        stmt1 = (
+            select(
+                Posts.id,
+                Posts.user_id,
+                Posts.desscription,
+                Posts.posted_at,
+                func.array_agg(Photos.file_link).label("photo_links"),
+            )
+            .join_from(Posts, Photos, Posts.id == Photos.post_id_fkey)
+            .where(Posts.user_id == user_id)
+            .group_by(Posts.id)
+        )
+        data = await session.execute(stmt1)
+        res = data.mappings().fetchmany()
+        return res
+
+
+async def like_post(post_id: int, user_id: int):
+    async with async_session_factory() as session:
+        stmt = select(Likes).where(Likes.post_id == post_id, Likes.user_id == user_id)
+        res = await session.execute(stmt)
+        if res.scalar() is None:
+            data = {
+                "post_id": post_id,
+                "user_id": user_id,
+            }
+            stmt1 = Likes(**data)
+            session.add(stmt1)
+            await session.flush()
+            await session.commit()
+            return {"success": True, "action": "like"}
+        else:
+            stmt2 = delete(Likes).where(
+                Likes.post_id == post_id, Likes.user_id == user_id
+            )
+            await session.execute(stmt2)
+            await session.flush()
+            await session.commit()
+            return {"success": True, "action": "dislike"}
 
 
 # PASSWORD OPERATION
