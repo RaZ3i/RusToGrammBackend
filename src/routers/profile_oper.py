@@ -8,8 +8,8 @@ from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
-from schemas.user_info_in import UserProfileInfoIn, CommentData, LikeData
-from service.service import (
+from src.schemas.user_info_in import UserProfileInfoIn, CommentData, LikeData
+from src.service.service import (
     add_avatar_link,
     subscribe,
     add_post,
@@ -21,11 +21,11 @@ from src.schemas.user_info import (
     UserInfo,
     SuccessResponse,
 )
-from utils.auth import (
+from src.utils.auth import (
     get_current_auth_user_from_cookie,
     get_current_auth_user_from_refresh,
 )
-from utils.files import add_new_file
+from src.utils.files import add_new_file
 
 router = APIRouter(prefix="/profile", tags=["Profile_operation"])
 

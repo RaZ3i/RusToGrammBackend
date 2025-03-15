@@ -7,8 +7,8 @@ from starlette.requests import Request
 from starlette.responses import Response, FileResponse
 
 
-from schemas.user_info import UserInfo, UserForSubList, SubCount, UserProfileInfo
-from service.service import (
+from src.schemas.user_info import UserInfo, UserForSubList, SubCount, UserProfileInfo
+from src.service.service import (
     get_user_profile_info,
     get_subscribes,
     subscribes_count,
@@ -18,11 +18,11 @@ from service.service import (
     get_users_posts,
     get_comments_post,
 )
-from utils.auth import (
+from src.utils.auth import (
     get_current_auth_user_from_cookie,
     get_current_auth_user_from_refresh,
 )
-from utils.pagination import Pagination, pagination_params
+from src.utils.pagination import Pagination, pagination_params
 
 router = APIRouter(prefix="/profile", tags=["User_information"])
 

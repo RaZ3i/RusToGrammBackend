@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
 from typing import Annotated
 import re
-from errors import Errors
+from src.errors import Errors
 
 
 class UserRegisterIn(BaseModel):

@@ -22,7 +22,7 @@ from src.models.models import (
     Comments,
     Likes,
 )
-from errors import Errors
+from src.errors import Errors
 
 
 async def get_user_id(user_login: str):

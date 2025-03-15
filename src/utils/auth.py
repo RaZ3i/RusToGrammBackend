@@ -16,7 +16,7 @@ from src.config import settings
 from src.service.service import get_user_auth_info
 from src.models.models import UserRefreshToken
 
-from errors import Errors
+from src.errors import Errors
 
 TOKEN_TYPE_FIELD = "type"
 ACCESS_TOKEN_TYPE = "access"
