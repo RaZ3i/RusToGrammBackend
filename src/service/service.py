@@ -297,6 +297,15 @@ async def get_comments_post(post_id: int):
 
 async def get_users_posts(user_id: int):
     async with async_session_factory() as session:
+        subq = select(Posts.id).where(Posts.user_id == user_id).subquery()
+        subq_2 = (
+            select(func.count(Likes.post_id))
+            .where(Likes.post_id == Posts.id, Posts.user_id == user_id)
+            .group_by(Likes.post_id)
+        ).scalar_subquery()
+        # likes = await session.execute(subq_2)
+        # result = likes.mappings().fetchmany()
+        # return result
         stmt1 = (
             select(
                 Posts.id,
@@ -304,6 +313,7 @@ async def get_users_posts(user_id: int):
                 Posts.desscription,
                 Posts.posted_at,
                 func.array_agg(Photos.file_link).label("photo_links"),
+                subq_2.label("likes_count"),
             )
             .join_from(Posts, Photos, Posts.id == Photos.post_id_fkey)
             .where(Posts.user_id == user_id)
