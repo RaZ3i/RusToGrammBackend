@@ -33,7 +33,7 @@ class UserRegisterIn(BaseModel):
                 output_data.append(
                     {
                         "code": 99,
-                        "msg": "Логин должен содержать: от 4 до 15 символов; большие и маленькие буквы латиницы; цифры",
+                        "msg": "Логин должен содержать:\n- От 4 до 15 символов;\n- Латинские большие и маленькие буквы;\n- Цифры.",
                     }
                 )
             if not re.match(
@@ -43,7 +43,7 @@ class UserRegisterIn(BaseModel):
                 output_data.append(
                     {
                         "code": 96,
-                        "msg": "Пример телефона +78451254325/89651542355",
+                        "msg": "Ошибка в формате номера телефона.\nПример: +7-xxx-xxx-xx-xx/8-xxx-xxx-xx-xx.",
                     }
                 )
             if not re.match(
@@ -53,7 +53,7 @@ class UserRegisterIn(BaseModel):
                 output_data.append(
                     {
                         "code": 98,
-                        "msg": "Пароль должен содержать: минимум 10 символов; большие и маленькие буквы латиницы; цифры; спецсимволы",
+                        "msg": "Пароль должен содержать:\n- Минимум 10 символов;\n- Латинские большие и маленькие буквы;\n- цифры;\n- спецсимволы.",
                     }
                 )
             try:
@@ -62,7 +62,7 @@ class UserRegisterIn(BaseModel):
                 output_data.append(
                     {
                         "code": 97,
-                        "msg": "Email не прошел проверку. Пример правильного emailbox@mail.ru",
+                        "msg": "Email не прошел проверку.\nПример e-mail: example@mail.ru",
                     }
                 )
             finally:

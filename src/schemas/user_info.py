@@ -5,7 +5,7 @@ from typing_extensions import TypedDict
 class UserInfo(BaseModel):
     id: int
     login: str
-    phone: str
+    phone: str | None = None
 
 
 class UserProfileInfo(BaseModel):
