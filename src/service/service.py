@@ -1,16 +1,15 @@
-from pathlib import Path
-
+# from pathlib import Path
 import bcrypt
 import uuid
-
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, update, delete
-from sqlalchemy.orm import selectinload, joinedload
+# from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.sql.functions import count, func
 
 from src.database import async_session_factory
 from src.schemas.authin import UserRegisterIn
+from src.schemas.user_info import UserInfo
 from src.models.models import (
     User,
     UserProtect,
@@ -87,7 +86,8 @@ async def create_user(new_user: UserRegisterIn):
             session.add_all([stmt2, stmt3])
             await session.flush()
             await session.commit()
-            return {"success": True}
+            user_data = {'id': user_id, 'login': data1["login"], 'phone': data1["phone"]}
+            return {"success": True, 'user_info': user_data}
         except IntegrityError:
             raise Errors.duplicate
 
