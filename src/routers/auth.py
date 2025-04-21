@@ -42,7 +42,7 @@ async def login(
     response.set_cookie(
         key="users_access_token",
         value=access_token,
-        domain="127.0.0.1",
+        # domain="127.0.0.1",
         httponly=True,
     )
     return {
@@ -61,7 +61,8 @@ async def login(
 async def logout(
     response: Response,
 ):
-    response.delete_cookie(key="users_access_token", domain="127.0.0.1")
+    response.delete_cookie(key="users_access_token")
+    # response.delete_cookie(key="users_access_token", domain="127.0.0.1")
     return {"success": True}
 
 

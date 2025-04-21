@@ -53,11 +53,13 @@ class UserRegisterIn(BaseModel):
                 output_data.append(
                     {
                         "code": 98,
-                        "msg": "Пароль должен содержать: минимум 10 символов; большие и маленькие буквы латиницы; цифры; спецсимволы",
+                        "msg": "Пароль должен содержать: минимум 10 символов; большие и маленькие буквы латиницы; "
+                        "цифры; спецсимволы",
                     }
                 )
             try:
-                validate_email(data["email"])
+                emailinfo = validate_email(data["email"], check_deliverability=False)
+                data["email"] = emailinfo.normalized
             except EmailNotValidError:
                 output_data.append(
                     {
