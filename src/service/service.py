@@ -352,6 +352,7 @@ async def like_post(post_id: int, user_id: int):
             return {"success": True, "action": "dislike"}
 
 
+# sd
 # CHAT OPERATION
 async def get_messages_between_users(user_id_1: int, user_id_2: int):
     async with async_session_factory() as session:
