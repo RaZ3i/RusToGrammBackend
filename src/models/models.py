@@ -155,3 +155,14 @@ class Likes(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         server_default=text("TIMEZONE('utc', now())")
     )
+
+
+class Messages(Base):
+    __tablename__ = "messages"
+    id: Mapped[intpk]
+    sender_id: Mapped[int] = mapped_column(ForeignKey("users_profiles.id"))
+    recipient_id: Mapped[int] = mapped_column(ForeignKey("users_profiles.id"))
+    content: Mapped[str] = mapped_column(String(485), nullable=False)
+    send_time: Mapped[datetime.datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())")
+    )

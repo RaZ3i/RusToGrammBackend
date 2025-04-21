@@ -1,0 +1,101 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="88">
+            <item index="0" class="java.lang.String" itemvalue="tabulate" />
+            <item index="1" class="java.lang.String" itemvalue="mypy" />
+            <item index="2" class="java.lang.String" itemvalue="Brotli" />
+            <item index="3" class="java.lang.String" itemvalue="defusedxml" />
+            <item index="4" class="java.lang.String" itemvalue="setuptools" />
+            <item index="5" class="java.lang.String" itemvalue="influxdb" />
+            <item index="6" class="java.lang.String" itemvalue="dulwich" />
+            <item index="7" class="java.lang.String" itemvalue="hypothesis-graphql" />
+            <item index="8" class="java.lang.String" itemvalue="harfile" />
+            <item index="9" class="java.lang.String" itemvalue="filelock" />
+            <item index="10" class="java.lang.String" itemvalue="locust-influxdb-listener" />
+            <item index="11" class="java.lang.String" itemvalue="pyzmq" />
+            <item index="12" class="java.lang.String" itemvalue="gevent" />
+            <item index="13" class="java.lang.String" itemvalue="jsonschema" />
+            <item index="14" class="java.lang.String" itemvalue="passlib" />
+            <item index="15" class="java.lang.String" itemvalue="crashtest" />
+            <item index="16" class="java.lang.String" itemvalue="poetry-core" />
+            <item index="17" class="java.lang.String" itemvalue="pywin32" />
+            <item index="18" class="java.lang.String" itemvalue="schemathesis" />
+            <item index="19" class="java.lang.String" itemvalue="Werkzeug" />
+            <item index="20" class="java.lang.String" itemvalue="iniconfig" />
+            <item index="21" class="java.lang.String" itemvalue="graphql-core" />
+            <item index="22" class="java.lang.String" itemvalue="rapidfuzz" />
+            <item index="23" class="java.lang.String" itemvalue="zope.interface" />
+            <item index="24" class="java.lang.String" itemvalue="pexpect" />
+            <item index="25" class="java.lang.String" itemvalue="gunicorn" />
+            <item index="26" class="java.lang.String" itemvalue="psutil" />
+            <item index="27" class="java.lang.String" itemvalue="installer" />
+            <item index="28" class="java.lang.String" itemvalue="PySocks" />
+            <item index="29" class="java.lang.String" itemvalue="httpie" />
+            <item index="30" class="java.lang.String" itemvalue="virtualenv" />
+            <item index="31" class="java.lang.String" itemvalue="charset-normalizer" />
+            <item index="32" class="java.lang.String" itemvalue="distlib" />
+            <item index="33" class="java.lang.String" itemvalue="starlette-testclient" />
+            <item index="34" class="java.lang.String" itemvalue="CacheControl" />
+            <item index="35" class="java.lang.String" itemvalue="msgpack" />
+            <item index="36" class="java.lang.String" itemvalue="locust" />
+            <item index="37" class="java.lang.String" itemvalue="referencing" />
+            <item index="38" class="java.lang.String" itemvalue="rsa" />
+            <item index="39" class="java.lang.String" itemvalue="ptyprocess" />
+            <item index="40" class="java.lang.String" itemvalue="more-itertools" />
+            <item index="41" class="java.lang.String" itemvalue="pluggy" />
+            <item index="42" class="java.lang.String" itemvalue="psycopg-binary" />
+            <item index="43" class="java.lang.String" itemvalue="pyasn1" />
+            <item index="44" class="java.lang.String" itemvalue="requests" />
+            <item index="45" class="java.lang.String" itemvalue="Flask-Login" />
+            <item index="46" class="java.lang.String" itemvalue="tag-matcher" />
+            <item index="47" class="java.lang.String" itemvalue="jsonschema-specifications" />
+            <item index="48" class="java.lang.String" itemvalue="poetry-plugin-export" />
+            <item index="49" class="java.lang.String" itemvalue="pyrate-limiter" />
+            <item index="50" class="java.lang.String" itemvalue="rpds-py" />
+            <item index="51" class="java.lang.String" itemvalue="locust-grasshopper" />
+            <item index="52" class="java.lang.String" itemvalue="pytest-subtests" />
+            <item index="53" class="java.lang.String" itemvalue="tomlkit" />
+            <item index="54" class="java.lang.String" itemvalue="aiosqlite" />
+            <item index="55" class="java.lang.String" itemvalue="pkginfo" />
+            <item index="56" class="java.lang.String" itemvalue="pywin32-ctypes" />
+            <item index="57" class="java.lang.String" itemvalue="tenacity" />
+            <item index="58" class="java.lang.String" itemvalue="tomli" />
+            <item index="59" class="java.lang.String" itemvalue="urllib3" />
+            <item index="60" class="java.lang.String" itemvalue="zope.event" />
+            <item index="61" class="java.lang.String" itemvalue="python-jose" />
+            <item index="62" class="java.lang.String" itemvalue="Flask" />
+            <item index="63" class="java.lang.String" itemvalue="poetry" />
+            <item index="64" class="java.lang.String" itemvalue="blinker" />
+            <item index="65" class="java.lang.String" itemvalue="jaraco.classes" />
+            <item index="66" class="java.lang.String" itemvalue="Flask-Cors" />
+            <item index="67" class="java.lang.String" itemvalue="trove-classifiers" />
+            <item index="68" class="java.lang.String" itemvalue="pyproject_hooks" />
+            <item index="69" class="java.lang.String" itemvalue="pytest" />
+            <item index="70" class="java.lang.String" itemvalue="backoff" />
+            <item index="71" class="java.lang.String" itemvalue="aiofiles" />
+            <item index="72" class="java.lang.String" itemvalue="tomli_w" />
+            <item index="73" class="java.lang.String" itemvalue="ecdsa" />
+            <item index="74" class="java.lang.String" itemvalue="junit-xml" />
+            <item index="75" class="java.lang.String" itemvalue="plotly" />
+            <item index="76" class="java.lang.String" itemvalue="hypothesis-jsonschema" />
+            <item index="77" class="java.lang.String" itemvalue="fastjsonschema" />
+            <item index="78" class="java.lang.String" itemvalue="sortedcontainers" />
+            <item index="79" class="java.lang.String" itemvalue="termcolor" />
+            <item index="80" class="java.lang.String" itemvalue="build" />
+            <item index="81" class="java.lang.String" itemvalue="psycopg" />
+            <item index="82" class="java.lang.String" itemvalue="geventhttpclient" />
+            <item index="83" class="java.lang.String" itemvalue="ConfigArgParse" />
+            <item index="84" class="java.lang.String" itemvalue="cleo" />
+            <item index="85" class="java.lang.String" itemvalue="hypothesis" />
+            <item index="86" class="java.lang.String" itemvalue="keyring" />
+            <item index="87" class="java.lang.String" itemvalue="requests-toolbelt" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

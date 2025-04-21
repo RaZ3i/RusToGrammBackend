@@ -18,3 +18,8 @@ class CommentData(BaseModel):
 class LikeData(BaseModel):
     post_id: int
     user_id: int
+
+
+class MessageCreate(BaseModel):
+    recipient_id: int
+    content: str
