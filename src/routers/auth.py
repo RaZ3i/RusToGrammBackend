@@ -26,10 +26,24 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     response_model=UserRegisterOut,
 )
 async def registration(
-    new_user: UserRegisterIn,
+    response: Response, new_user: UserRegisterIn,
 ):
-    result = await create_user(new_user)
-    return result
+    user = await create_user(new_user)
+    if user['success']:
+        access_token = create_access_token(user['user_info'])
+        refresh_token = create_refresh_token(user['user_info'])
+        await add_refresh_token_to_db(refresh_token)
+
+        response.set_cookie(
+            key="users_access_token",
+            value=access_token,
+            # domain="127.0.0.1",
+            httponly=True,
+        )
+        return {
+            "success": True
+        }
+    return user
 
 
 @router.post("/login/", status_code=status.HTTP_200_OK)
@@ -47,7 +61,7 @@ async def login(
     )
     return {
         "success": True,
-        "access_token": access_token,
+        # "access_token": access_token,
         # "refresh_token": refresh_token,
     }
 

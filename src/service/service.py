@@ -1,17 +1,15 @@
-import datetime
-from pathlib import Path
-
+# from pathlib import Path
 import bcrypt
 import uuid
-
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select, update, delete, or_, and_
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy import select, update, delete
+# from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.sql.functions import count, func
 
 from src.database import async_session_factory
 from src.schemas.authin import UserRegisterIn
+from src.schemas.user_info import UserInfo
 from src.models.models import (
     User,
     UserProtect,
@@ -22,7 +20,6 @@ from src.models.models import (
     Photos,
     Comments,
     Likes,
-    Messages,
 )
 from src.errors import Errors
 
@@ -89,7 +86,8 @@ async def create_user(new_user: UserRegisterIn):
             session.add_all([stmt2, stmt3])
             await session.flush()
             await session.commit()
-            return {"success": True}
+            user_data = {'id': user_id, 'login': data1["login"], 'phone': data1["phone"]}
+            return {"success": True, 'user_info': user_data}
         except IntegrityError:
             raise Errors.duplicate
 
@@ -299,16 +297,15 @@ async def get_comments_post(post_id: int):
 
 async def get_users_posts(user_id: int):
     async with async_session_factory() as session:
-        comment_subq = (
-            select(func.count(Comments.post_id))
-            .where(Comments.post_id == Posts.id, Posts.user_id == user_id)
-            .scalar_subquery()
-        )
-        likes_subq = (
+        subq = select(Posts.id).where(Posts.user_id == user_id).subquery()
+        subq_2 = (
             select(func.count(Likes.post_id))
             .where(Likes.post_id == Posts.id, Posts.user_id == user_id)
             .group_by(Likes.post_id)
         ).scalar_subquery()
+        # likes = await session.execute(subq_2)
+        # result = likes.mappings().fetchmany()
+        # return result
         stmt1 = (
             select(
                 Posts.id,
@@ -316,8 +313,7 @@ async def get_users_posts(user_id: int):
                 Posts.desscription,
                 Posts.posted_at,
                 func.array_agg(Photos.file_link).label("photo_links"),
-                likes_subq.label("likes_count"),
-                comment_subq.label("comments_count"),
+                subq_2.label("likes_count"),
             )
             .join_from(Posts, Photos, Posts.id == Photos.post_id_fkey)
             .where(Posts.user_id == user_id)
@@ -350,43 +346,6 @@ async def like_post(post_id: int, user_id: int):
             await session.flush()
             await session.commit()
             return {"success": True, "action": "dislike"}
-
-
-# CHAT OPERATION
-async def get_messages_between_users(user_id_1: int, user_id_2: int):
-    async with async_session_factory() as session:
-        stmt = select(
-            Messages.sender_id,
-            Messages.recipient_id,
-            Messages.content,
-            Messages.send_time,
-        ).filter(
-            or_(
-                and_(
-                    Messages.recipient_id == user_id_1, Messages.sender_id == user_id_2
-                ),
-                and_(
-                    Messages.recipient_id == user_id_2, Messages.sender_id == user_id_1
-                ),
-            )
-        )
-        data = await session.execute(stmt)
-        res = data.mappings().fetchmany()
-        return res
-
-
-async def create_message(sender_id: int, recipient_id: int, content: str):
-    async with async_session_factory() as session:
-        data = {
-            "sender_id": sender_id,
-            "recipient_id": recipient_id,
-            "content": content,
-        }
-        stmt = Messages(**data)
-        session.add(stmt)
-        await session.flush()
-        await session.commit()
-        return {"success": True}
 
 
 # PASSWORD OPERATION

@@ -3,12 +3,13 @@ from fastapi import HTTPException, status
 
 class Errors:
     wrong_data = HTTPException(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"success": False}
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail={"success": False}
     )
 
     inv_token = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"success": False, "msg": "invalid token"},
+        detail={"success": False, "": 94, "msg": "invalid token"},
     )
     inv_token_type = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -24,5 +25,8 @@ class Errors:
     )
     duplicate = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail={"success": False, "msg": "data already exist"},
+        detail={"success": False,
+                "errors": [
+                    {"code": 95, "msg": "Такой пользователь уже существует"}
+                ]},
     )
