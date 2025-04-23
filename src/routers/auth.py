@@ -1,4 +1,5 @@
-from fastapi import APIRouter, status, Depends, Response
+from fastapi import APIRouter, status, Depends, Response, Request
+from jwt import ExpiredSignatureError
 
 from src.schemas.user_info import UserInfo
 from src.schemas.authout import UserRegisterOut, UserAuthLoginOut
@@ -10,7 +11,9 @@ from src.utils.auth import (
     validate_auth_user,
     get_current_auth_user_from_cookie,
     add_refresh_token_to_db,
+    get_current_auth_user_from_refresh,
 )
+from src.errors import Errors
 
 # from trash import get_current_auth_user, get_current_auth_user_for_refresh
 from src.utils.auth import create_access_token, create_refresh_token
@@ -20,18 +23,37 @@ from src.utils.auth import create_access_token, create_refresh_token
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
+@router.get("/validate_token/")
+async def validate_token(
+    response: Response,
+    request: Request,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    if current_user == ExpiredSignatureError:
+        current_user = await get_current_auth_user_from_refresh(request=request)
+        response.set_cookie(
+            key="users_access_token",
+            value=current_user["access_token"],
+            httponly=True,
+        )
+        return {"success": True}
+    else:
+        return Errors.inv_token
+
+
 @router.post(
     "/register/",
     status_code=status.HTTP_201_CREATED,
     response_model=UserRegisterOut,
 )
 async def registration(
-    response: Response, new_user: UserRegisterIn,
+    response: Response,
+    new_user: UserRegisterIn,
 ):
     user = await create_user(new_user)
-    if user['success']:
-        access_token = create_access_token(user['user_info'])
-        refresh_token = create_refresh_token(user['user_info'])
+    if user["success"]:
+        access_token = create_access_token(user["user_info"])
+        refresh_token = create_refresh_token(user["user_info"])
         await add_refresh_token_to_db(refresh_token)
 
         response.set_cookie(
@@ -40,9 +62,7 @@ async def registration(
             # domain="127.0.0.1",
             httponly=True,
         )
-        return {
-            "success": True
-        }
+        return {"success": True}
     return user
 
 

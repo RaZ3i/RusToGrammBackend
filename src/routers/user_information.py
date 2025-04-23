@@ -1,10 +1,8 @@
 from typing import Annotated
 
 from fastapi import Depends, APIRouter
-from jwt import ExpiredSignatureError
 from starlette import status
-from starlette.requests import Request
-from starlette.responses import Response, FileResponse
+from starlette.responses import FileResponse
 
 
 from src.schemas.user_info import UserInfo, UserForSubList, SubCount, UserProfileInfo
@@ -20,7 +18,6 @@ from src.service.service import (
 )
 from src.utils.auth import (
     get_current_auth_user_from_cookie,
-    get_current_auth_user_from_refresh,
 )
 from src.utils.pagination import Pagination, pagination_params
 
@@ -52,22 +49,10 @@ async def get_avatar_by_id(
     status_code=status.HTTP_200_OK,
 )
 async def get_subscribes_list(
-    response: Response,
-    request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        users_list = await get_subscribes(user_id=current_user["user_info"]["id"])
-        return users_list
-    else:
-        users_list = await get_subscribes(user_id=current_user["id"])
-        return users_list
+    users_list = await get_subscribes(user_id=current_user["id"])
+    return users_list
 
 
 @router.get(
@@ -76,22 +61,10 @@ async def get_subscribes_list(
     status_code=status.HTTP_200_OK,
 )
 async def get_subscribes_count(
-    response: Response,
-    request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        count = await subscribes_count(user_id=current_user["user_info"]["id"])
-        return count
-    else:
-        count = await subscribes_count(user_id=current_user["id"])
-        return count
+    count = await subscribes_count(user_id=current_user["id"])
+    return count
 
 
 @router.get(
@@ -100,22 +73,10 @@ async def get_subscribes_count(
     status_code=status.HTTP_200_OK,
 )
 async def get_subscribers_list(
-    response: Response,
-    request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        users_list = await get_subscribers(user_id=current_user["user_info"]["id"])
-        return users_list
-    else:
-        users_list = await get_subscribers(user_id=current_user["id"])
-        return users_list
+    users_list = await get_subscribers(user_id=current_user["id"])
+    return users_list
 
 
 @router.get(
@@ -124,22 +85,10 @@ async def get_subscribers_list(
     status_code=status.HTTP_200_OK,
 )
 async def get_subscribers_count(
-    response: Response,
-    request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        count = await subscribers_count(user_id=current_user["user_info"]["id"])
-        return count
-    else:
-        count = await subscribers_count(user_id=current_user["id"])
-        return count
+    count = await subscribers_count(user_id=current_user["id"])
+    return count
 
 
 @router.get(
@@ -148,23 +97,10 @@ async def get_subscribers_count(
     response_model=UserProfileInfo,
 )
 async def get_my_info(
-    response: Response,
-    request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        # response.delete_cookie(key="users_access_token", domain="localhost")
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        info = await get_user_profile_info(user_id=current_user["user_info"]["id"])
-        return info
-    else:
-        info = await get_user_profile_info(user_id=current_user["id"])
-        return info
+    info = await get_user_profile_info(user_id=current_user["id"])
+    return info
 
 
 @router.get(
@@ -172,28 +108,12 @@ async def get_my_info(
 )
 async def get_users(
     pagination: Annotated[Pagination, Depends(pagination_params)],
-    response: Response,
-    request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        users_list = await get_users_lists(
-            user_id=current_user["user_info"]["id"],
-            perpage=pagination.perPage,
-            page=pagination.page,
-        )
-        return users_list
-    else:
-        users_list = await get_users_lists(
-            user_id=current_user["id"], perpage=pagination.perPage, page=pagination.page
-        )
-        return users_list
+    users_list = await get_users_lists(
+        user_id=current_user["id"], perpage=pagination.perPage, page=pagination.page
+    )
+    return users_list
 
 
 @router.get("/user_posts/", status_code=status.HTTP_200_OK)

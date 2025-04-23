@@ -5,16 +5,14 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
     Depends,
-    Response,
-    Request,
 )
 from typing import Dict
 
 from jwt import ExpiredSignatureError
 
-from schemas.user_info import UserInfo
-from service.service import create_message, get_messages_between_users
-from schemas.user_info_in import MessageCreate
+from src.schemas.user_info import UserInfo
+from src.service.service import create_message, get_messages_between_users
+from src.schemas.user_info_in import MessageCreate
 from src.utils.auth import (
     get_current_auth_user_from_cookie,
     get_current_auth_user_from_refresh,
@@ -51,67 +49,30 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
 
 @router.post("/messages/")
 async def send_message(
-    response: Response,
-    request: Request,
     message_data: MessageCreate,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        await create_message(
-            sender_id=current_user["user_info"]["id"],
-            recipient_id=message_data.recipient_id,
-            content=message_data.content,
-        )
-        data = {
-            "sender_id": current_user["user_info"]["id"],
-            "recipient_id": message_data.recipient_id,
-            "content": message_data.content,
-        }
-        await notify_user(message_data.recipient_id, data)
-        await notify_user(current_user["user_info"]["id"], data)
-        return {"success": True}
-    else:
-        await create_message(
-            sender_id=current_user["id"],
-            recipient_id=message_data.recipient_id,
-            content=message_data.content,
-        )
-        data = {
-            "sender_id": current_user["id"],
-            "recipient_id": message_data.recipient_id,
-            "content": message_data.content,
-        }
-        await notify_user(message_data.recipient_id, data)
-        await notify_user(current_user["id"], data)
-        return {"success": True}
+    await create_message(
+        sender_id=current_user["id"],
+        recipient_id=message_data.recipient_id,
+        content=message_data.content,
+    )
+    data = {
+        "sender_id": current_user["id"],
+        "recipient_id": message_data.recipient_id,
+        "content": message_data.content,
+    }
+    await notify_user(message_data.recipient_id, data)
+    await notify_user(current_user["id"], data)
+    return {"success": True}
 
 
 @router.get("/messages/{user_id}")
 async def get_messages(
-    response: Response,
-    request: Request,
     user_id: int,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
-        current_user = await get_current_auth_user_from_refresh(request=request)
-        response.set_cookie(
-            key="users_access_token",
-            value=current_user["access_token"],
-            httponly=True,
-        )
-        res = await get_messages_between_users(
-            user_id_1=user_id, user_id_2=current_user["user_info"]["id"]
-        )
-        return res
-    else:
-        res = await get_messages_between_users(
-            user_id_1=user_id, user_id_2=current_user["id"]
-        )
-        return res
+    res = await get_messages_between_users(
+        user_id_1=user_id, user_id_2=current_user["id"]
+    )
+    return res
