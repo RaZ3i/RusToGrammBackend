@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Depends, Response, Request
-from jwt import ExpiredSignatureError
+from jwt.exceptions import ExpiredSignatureError
 
 from src.schemas.user_info import UserInfo
 from src.schemas.authout import UserRegisterOut, UserAuthLoginOut
@@ -29,16 +29,20 @@ async def validate_token(
     request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
+    if current_user != ExpiredSignatureError:
+        return {"success": True, 'code': 0}
+    elif current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
         response.set_cookie(
             key="users_access_token",
             value=current_user["access_token"],
+            secure=True,
             httponly=True,
+            samesite='none'
         )
-        return {"success": True}
+        return {"success": True, 'code': 0}
     else:
-        return Errors.inv_token
+        raise Errors.inv_token
 
 
 @router.post(
@@ -77,7 +81,9 @@ async def login(
         key="users_access_token",
         value=access_token,
         # domain="127.0.0.1",
+        secure=True,
         httponly=True,
+        samesite='none'
     )
     return {
         "success": True,

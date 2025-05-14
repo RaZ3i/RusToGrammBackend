@@ -9,19 +9,19 @@ class Errors:
 
     inv_token = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"success": False, "": 94, "msg": "invalid token"},
+        detail={"success": False, "code": 94, "msg": "Ошибка проверки данных"},
     )
     inv_token_type = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"success": False, "msg": "invalid token type"},
+        detail={"success": False, "msg": "Не удалось идентифицировать токен"},
     )
     unauthed_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"success": False, "msg": "wrong password or login"},
+        detail={"success": False, "msg": "Неверный логин или пароль"},
     )
     relog_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"success": False, "msg": "login in your account"},
+        detail={"success": False, "code": 93, "msg": "Требуется повторная авторизация"},
     )
     duplicate = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,

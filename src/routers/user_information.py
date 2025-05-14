@@ -4,7 +4,7 @@ from fastapi import Depends, APIRouter
 from starlette import status
 from starlette.responses import FileResponse
 
-
+from src.errors import Errors
 from src.schemas.user_info import UserInfo, UserForSubList, SubCount, UserProfileInfo
 from src.service.service import (
     get_user_profile_info,
@@ -24,12 +24,15 @@ from src.utils.pagination import Pagination, pagination_params
 router = APIRouter(prefix="/profile", tags=["User_information"])
 
 
-@router.get("/get_user_info_by_id/{user_id}", status_code=status.HTTP_200_OK)
+@router.get("/get_user_info_by_id/", status_code=status.HTTP_200_OK)
 async def get_user_info_by_id(
-    user_id: int,
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    info = await get_user_profile_info(user_id=user_id)
-    return info
+    try:
+        info = await get_user_profile_info(user_id=int(current_user['id']))
+        return info
+    except:
+        return current_user
     # return {"user_profile": info, "avatar": FileResponse(path=info.avatar_link).path}
 
 
@@ -63,8 +66,11 @@ async def get_subscribes_list(
 async def get_subscribes_count(
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    count = await subscribes_count(user_id=current_user["id"])
-    return count
+    try:
+        count = await subscribes_count(user_id=current_user["id"])
+        return count
+    except:
+        raise Errors.relog_exc
 
 
 @router.get(
@@ -87,8 +93,11 @@ async def get_subscribers_list(
 async def get_subscribers_count(
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    count = await subscribers_count(user_id=current_user["id"])
-    return count
+    try:
+        count = await subscribers_count(user_id=current_user["id"])
+        return count
+    except:
+        raise Errors.relog_exc
 
 
 @router.get(
@@ -99,8 +108,11 @@ async def get_subscribers_count(
 async def get_my_info(
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    info = await get_user_profile_info(user_id=current_user["id"])
-    return info
+    try:
+        info = await get_user_profile_info(user_id=current_user["id"])
+        return info
+    except:
+        raise Errors.relog_exc
 
 
 @router.get(
