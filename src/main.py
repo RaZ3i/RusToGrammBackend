@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.routers.auth import router as auth_router
 from src.routers.profile_oper import router as profile_oper_router
@@ -14,11 +14,12 @@ app.include_router(user_information_router)
 app.include_router(chat_router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8134, reload=True)
+    uvicorn.run("main:app", port=8134, reload=True)
 
 
 origins = [
     "http://127.0.0.1:5500",
+    "http://127.0.0.1:3000",
     "http://localhost:5500",
     "http://localhost:3000",
 ]

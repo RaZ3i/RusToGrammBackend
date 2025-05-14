@@ -117,8 +117,8 @@ async def get_users(
 
 
 @router.get("/user_posts/", status_code=status.HTTP_200_OK)
-async def get_posts(user_id: int):
-    res = await get_users_posts(user_id=user_id)
+async def get_posts(user_id: int, posts_limit: int, page: int):
+    res = await get_users_posts(user_id=user_id, posts_limit=posts_limit, page=page)
     return res
 
 

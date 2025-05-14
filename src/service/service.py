@@ -6,7 +6,7 @@ import uuid
 
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select, update, delete, or_, and_
+from sqlalchemy import select, update, delete, or_, and_, asc, desc
 from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.sql.functions import count, func
 
@@ -90,8 +90,12 @@ async def create_user(new_user: UserRegisterIn):
             session.add_all([stmt2, stmt3])
             await session.flush()
             await session.commit()
-            user_data = {'id': user_id, 'login': data1["login"], 'phone': data1["phone"]}
-            return {"success": True, 'user_info': user_data}
+            user_data = {
+                "id": user_id,
+                "login": data1["login"],
+                "phone": data1["phone"],
+            }
+            return {"success": True, "user_info": user_data}
         except IntegrityError:
             raise Errors.duplicate
 
@@ -299,7 +303,7 @@ async def get_comments_post(post_id: int):
     return res
 
 
-async def get_users_posts(user_id: int):
+async def get_users_posts(user_id: int, posts_limit: int, page: int):
     async with async_session_factory() as session:
         comment_subq = (
             select(func.count(Comments.post_id))
@@ -309,8 +313,8 @@ async def get_users_posts(user_id: int):
         likes_subq = (
             select(func.count(Likes.post_id))
             .where(Likes.post_id == Posts.id, Posts.user_id == user_id)
-            .group_by(Likes.post_id)
-        ).scalar_subquery()
+            .scalar_subquery()
+        )
         stmt1 = (
             select(
                 Posts.id,
@@ -322,8 +326,12 @@ async def get_users_posts(user_id: int):
                 comment_subq.label("comments_count"),
             )
             .join_from(Posts, Photos, Posts.id == Photos.post_id_fkey)
-            .where(Posts.user_id == user_id)
+            .where(
+                Posts.user_id == user_id,
+            )
             .group_by(Posts.id)
+            .order_by(desc(Posts.posted_at))
+            .limit(posts_limit)
         )
         data = await session.execute(stmt1)
         res = data.mappings().fetchmany()

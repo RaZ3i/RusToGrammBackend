@@ -29,7 +29,9 @@ async def validate_token(
     request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    if current_user == ExpiredSignatureError:
+    if current_user != ExpiredSignatureError:
+        return {"success": True}
+    elif current_user == ExpiredSignatureError:
         current_user = await get_current_auth_user_from_refresh(request=request)
         response.set_cookie(
             key="users_access_token",
@@ -38,7 +40,7 @@ async def validate_token(
         )
         return {"success": True}
     else:
-        return Errors.inv_token
+        raise Errors.inv_token
 
 
 @router.post(

@@ -83,7 +83,7 @@ async def create_token(user: UserInfo) -> dict:
     access_token = create_access_token(user)
     refresh_token = create_refresh_token(user)
     await add_refresh_token_to_db(refresh_token)
-    return {'access_token': access_token}
+    return {"access_token": access_token}
 
 
 def create_access_token(user: UserInfo) -> str:
