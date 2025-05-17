@@ -2,13 +2,14 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import LOGGING_CONFIG
-
+from fastapi.staticfiles import StaticFiles
 from src.routers.auth import router as auth_router
 from src.routers.profile_oper import router as profile_oper_router
 from src.routers.user_information import router as user_information_router
 from src.routers.chat import router as chat_router
 
 app = FastAPI(title="RuStoGramm")
+app.mount("/files", StaticFiles(directory="files"), name="media_files")
 app.include_router(auth_router)
 app.include_router(profile_oper_router)
 app.include_router(user_information_router)
@@ -16,9 +17,9 @@ app.include_router(chat_router)
 
 if __name__ == "__main__":
     LOGGING_CONFIG["formatters"]["access"]["fmt"] = (
-            "%(asctime)s " + LOGGING_CONFIG["formatters"]["access"]["fmt"]
+        "%(asctime)s " + LOGGING_CONFIG["formatters"]["access"]["fmt"]
     )
-    uvicorn.run("main:app", host="0.0.0.0", port=8134, reload=True)
+    uvicorn.run("main:app", port=8134, reload=True)
 
 
 origins = [
