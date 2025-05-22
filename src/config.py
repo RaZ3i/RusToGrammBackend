@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     PRIVATE_KEY_PATH: Path = PRIVATE_PATH
     PUBLIC_KEY_PATH: Path = PUBLIC_PATH
     ALGORITHM: str = "RS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     @property
