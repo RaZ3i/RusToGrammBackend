@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, List
 
 from fastapi import Depends, APIRouter
 from starlette import status
@@ -24,15 +24,17 @@ from src.utils.pagination import Pagination, pagination_params
 router = APIRouter(prefix="/profile", tags=["User_information"])
 
 
-@router.get("/get_user_info_by_id/", status_code=status.HTTP_200_OK)
-async def get_user_info_by_id(
-    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
-):
+@router.get(
+    "/get_user_info_by_id/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=UserProfileInfo,
+)
+async def get_user_info_by_id(user_id: int):
     try:
-        info = await get_user_profile_info(user_id=int(current_user['id']))
+        info = await get_user_profile_info(user_id=user_id)
         return info
     except:
-        return current_user
+        return user_id
     # return {"user_profile": info, "avatar": FileResponse(path=info.avatar_link).path}
 
 
@@ -41,8 +43,11 @@ async def get_avatar_by_id(
     user_id: int,
 ):
     info = await get_user_profile_info(user_id=user_id)
-    avatar = FileResponse(path=info.avatar_link)
-    return avatar
+    if info.avatar_link is None:
+        raise Errors.file_exc
+    else:
+        # avatar = FileResponse(path=str(info.avatar_link))
+        return {"success": True, "avatar_link": info.avatar_link}
 
 
 # Убрать current_user позже и сделать чтобы функция просто принимала user_id

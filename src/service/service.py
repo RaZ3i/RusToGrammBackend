@@ -26,6 +26,7 @@ from src.models.models import (
     Messages,
 )
 from src.errors import Errors
+from src.utils.files import delete_user_avatar
 
 
 async def get_user_id(user_login: str):
@@ -42,14 +43,6 @@ async def get_user_data(user_login: str):
         res = await session.execute(stmt1)
         user_data = res.scalar()
         return user_data
-
-
-async def get_user_profile_info(user_id: int):
-    async with async_session_factory() as session:
-        stmt = select(UserProfile).where(UserProfile.user_id == user_id)
-        res = await session.execute(stmt)
-        profile_data = res.scalar()
-        return profile_data
 
 
 async def get_user_auth_info(login: str):
@@ -129,6 +122,19 @@ async def add_avatar_link(user_id: int, avatar_link: str):
         return {"success": True, "changed": True}
 
 
+async def delete_user_avatar_link(user_id: int):
+    async with async_session_factory() as session:
+        stmt = (
+            update(UserProfile)
+            .where(UserProfile.id == user_id)
+            .values(avatar_link=None)
+        )
+        await session.execute(stmt)
+        await session.commit()
+    await delete_user_avatar(user_id=user_id)
+    return {"success": True}
+
+
 async def get_users_lists(user_id: int, perpage: int, page: int):
     async with async_session_factory() as session:
         stmt = (
@@ -147,6 +153,33 @@ async def get_users_lists(user_id: int, perpage: int, page: int):
         user_list = res.mappings().fetchmany()
         # count = await session.execute()
         return user_list
+
+
+async def get_user_profile_info(user_id: int):
+    async with async_session_factory() as session:
+        followers_count_subq = (
+            select(func.count(UserSubscribers.subscribers_id))
+            .where(UserSubscribers.user_id == user_id)
+            .scalar_subquery()
+        )
+        subscribes_count_subq = (
+            select(func.count(UserSubscribes.subscribes_id))
+            .where(UserSubscribes.user_id == user_id)
+            .scalar_subquery()
+        )
+        stmt = select(
+            UserProfile.user_id,
+            UserProfile.nickname,
+            UserProfile.user_name,
+            UserProfile.description,
+            UserProfile.avatar_link,
+            followers_count_subq.label("followers_count"),
+            subscribes_count_subq.label("subscribes_count"),
+            UserProfile.private_account,
+        ).where(UserProfile.user_id == user_id)
+        res = await session.execute(stmt)
+        profile_data = res.mappings().fetchmany()
+        return profile_data[0]
 
 
 async def subscribe(user_id: int, subscribe_id: int):

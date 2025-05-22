@@ -13,8 +13,10 @@ class UserProfileInfo(BaseModel):
     user_name: str | None = None
     description: str | None = None
     nickname: str
-    private_account: bool | None = None
     avatar_link: str | None = None
+    followers_count: int | str
+    subscribes_count: int | str
+    private_account: bool | None = None
 
 
 class SubCount(BaseModel):

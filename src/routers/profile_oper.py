@@ -1,3 +1,4 @@
+import os
 import uuid
 from pathlib import Path
 import re
@@ -13,6 +14,7 @@ from src.service.service import (
     update_profile,
     create_comment_post,
     like_post,
+    delete_user_avatar_link,
 )
 from src.schemas.user_info import (
     UserInfo,
@@ -22,6 +24,7 @@ from src.utils.auth import (
     get_current_auth_user_from_cookie,
 )
 from src.utils.files import add_new_file
+
 
 router = APIRouter(prefix="/profile", tags=["Profile_operation"])
 
@@ -51,6 +54,14 @@ async def upload_avatar(
         user_id=current_user["id"], avatar_link=str(avatar_dir_for_front)
     )
     return {"success": True, "avatar_link": str(avatar_dir_for_front)}
+
+
+@router.patch("/delete_avatar/", status_code=status.HTTP_200_OK)
+async def delete_avatar(
+    current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
+):
+    res = await delete_user_avatar_link(user_id=current_user["id"])
+    return res
 
 
 @router.post("/subscribe_at/{sub_id}", status_code=status.HTTP_200_OK)

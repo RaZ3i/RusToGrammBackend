@@ -1,7 +1,6 @@
 import os
 import re
 import shutil
-
 from fastapi import UploadFile, Request
 
 
@@ -25,3 +24,14 @@ def add_new_file(files: list[UploadFile], post_id: str, request: Request):
         return {"success": True, "links": links}
     except ValueError as error:
         return {"success": False, "msg": error.args}
+
+
+async def delete_user_avatar(user_id: int):
+    try:
+        avatars_dir = re.sub(r"\\", "/", os.getcwd())
+        os.remove(
+            f"{avatars_dir}/files/avatars/user_{user_id}_avatar.{"jpeg" or "png"}"
+        )
+        return {"success": True}
+    except OSError as err:
+        print(err)
