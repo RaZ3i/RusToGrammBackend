@@ -327,6 +327,7 @@ async def get_comments_post(post_id: int):
                 UserProfile.user_id,
                 UserProfile.nickname,
                 UserProfile.avatar_link,
+                Comments.created_at,
             )
             .join_from(Comments, UserProfile, Comments.user_id == UserProfile.user_id)
             .where(Comments.post_id == post_id)

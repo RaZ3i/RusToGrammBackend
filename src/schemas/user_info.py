@@ -1,5 +1,6 @@
+import datetime
+
 from pydantic import BaseModel
-from typing_extensions import TypedDict
 
 
 class UserInfo(BaseModel):
@@ -39,3 +40,27 @@ class UserRefreshTokenData(BaseModel):
 class SuccessResponse(BaseModel):
     success: bool
     changed: bool
+
+
+class AvatarLinkResponse(BaseModel):
+    success: bool
+    avatar_link: str
+
+
+class UserPostsResponse(BaseModel):
+    id: int
+    user_id: int
+    desscription: str
+    posted_at: datetime.datetime
+    photo_links: list[str]
+    likes_count: int
+    comments_count: int
+
+
+class PostCommentsResponse(BaseModel):
+    post_id: int
+    user_id: int
+    comment_text: str
+    nickname: str
+    avatar_link: str
+    created_at: datetime.datetime

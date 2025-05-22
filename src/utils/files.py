@@ -16,7 +16,9 @@ def add_new_file(files: list[UploadFile], post_id: str, request: Request):
         os.makedirs(post_dir)
         for file in files:
             file.filename = f"file_{file.size}_{post_id}_post.{(re.search(r"(jpeg)|(png)", file.content_type)).group()}"
-            file_link_for_front = request.url_for("media_files", path=file.filename)
+            file_link_for_front = request.url_for(
+                "media_files", path=f"/photos/{post_id}/" + file.filename
+            )
             links.append(str(file_link_for_front))
 
             with open(post_dir + "/" + file.filename, "wb") as buffer:

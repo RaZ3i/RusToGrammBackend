@@ -36,7 +36,7 @@ async def upload_avatar(
     request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    new_file_name = avatar.filename.replace(
+    new_file_name = "/avatars/" + avatar.filename.replace(
         avatar.filename,
         f"user_{current_user["id"]}_avatar.{(re.search(r"(jpeg)|(png)", avatar.content_type)).group()}",
     )

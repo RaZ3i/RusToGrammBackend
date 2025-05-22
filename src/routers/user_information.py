@@ -5,7 +5,15 @@ from starlette import status
 from starlette.responses import FileResponse
 
 from src.errors import Errors
-from src.schemas.user_info import UserInfo, UserForSubList, SubCount, UserProfileInfo
+from src.schemas.user_info import (
+    UserInfo,
+    UserForSubList,
+    SubCount,
+    UserProfileInfo,
+    AvatarLinkResponse,
+    UserPostsResponse,
+    PostCommentsResponse,
+)
 from src.service.service import (
     get_user_profile_info,
     get_subscribes,
@@ -38,13 +46,17 @@ async def get_user_info_by_id(user_id: int):
     # return {"user_profile": info, "avatar": FileResponse(path=info.avatar_link).path}
 
 
-@router.get("/get_avatar_by_id/{user_id}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/get_avatar_by_id/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=AvatarLinkResponse,
+)
 async def get_avatar_by_id(
     user_id: int,
 ):
     info = await get_user_profile_info(user_id=user_id)
     if info.avatar_link is None:
-        raise Errors.file_exc
+        return Errors.file_exc
     else:
         # avatar = FileResponse(path=str(info.avatar_link))
         return {"success": True, "avatar_link": info.avatar_link}
@@ -133,13 +145,21 @@ async def get_users(
     return users_list
 
 
-@router.get("/user_posts/", status_code=status.HTTP_200_OK)
+@router.get(
+    "/user_posts/",
+    status_code=status.HTTP_200_OK,
+    response_model=List[UserPostsResponse],
+)
 async def get_posts(user_id: int, posts_limit: int, page: int):
     res = await get_users_posts(user_id=user_id, posts_limit=posts_limit, page=page)
     return res
 
 
-@router.get("/comments_post/", status_code=status.HTTP_200_OK)
+@router.get(
+    "/comments_post/",
+    status_code=status.HTTP_200_OK,
+    response_model=List[PostCommentsResponse],
+)
 async def get_comments(post_id: int):
     res = await get_comments_post(post_id=post_id)
     return res
