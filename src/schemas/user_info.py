@@ -44,7 +44,7 @@ class SuccessResponse(BaseModel):
 
 class AvatarLinkResponse(BaseModel):
     success: bool
-    avatar_link: str
+    avatar_link: str | None = None
 
 
 class UserPostsResponse(BaseModel):

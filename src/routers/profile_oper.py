@@ -16,44 +16,35 @@ from src.service.service import (
     like_post,
     delete_user_avatar_link,
 )
-from src.schemas.user_info import (
-    UserInfo,
-    SuccessResponse,
-)
+from src.schemas.user_info import UserInfo, SuccessResponse, AvatarLinkResponse
 from src.utils.auth import (
     get_current_auth_user_from_cookie,
 )
-from src.utils.files import add_new_file
+from src.utils.files import add_new_file, delete_user_avatar, add_avatar
 
 
 router = APIRouter(prefix="/profile", tags=["Profile_operation"])
 
 
 # дописать проверку на тип загружаемого файла
-@router.post("/upload_avatar/", status_code=status.HTTP_200_OK)
+@router.post(
+    "/upload_avatar/", status_code=status.HTTP_200_OK, response_model=AvatarLinkResponse
+)
 async def upload_avatar(
     avatar: UploadFile,
     request: Request,
     current_user: UserInfo = Depends(get_current_auth_user_from_cookie),
 ):
-    new_file_name = "/avatars/" + avatar.filename.replace(
-        avatar.filename,
-        f"user_{current_user["id"]}_avatar.{(re.search(r"(jpeg)|(png)", avatar.content_type)).group()}",
-    )
-    avatars_dir_for_save = (
-        Path(__file__).parent.parent
-        / f"files/avatars/{avatar.filename.replace(avatar.filename,
-                                                       f"user_{current_user["id"]}_avatar.{(re.search(r"(jpeg)|(png)", avatar.content_type)).group()}")}"
-    )
-    avatar_dir_for_front = request.url_for("media_files", path=new_file_name)
-    # print(request.url_for("media_files", path=new_file_name))
-    # print(request.url_for("media_files", path=re.sub(r"\.\.", "/", str(avatars_dir))))
-    with open(avatars_dir_for_save, "wb") as buffer:
-        shutil.copyfileobj(avatar.file, buffer)
-    await add_avatar_link(
-        user_id=current_user["id"], avatar_link=str(avatar_dir_for_front)
-    )
-    return {"success": True, "avatar_link": str(avatar_dir_for_front)}
+    try:
+        res_1 = await add_avatar(
+            avatar=avatar, user_id=current_user["id"], request=request
+        )
+        await add_avatar_link(
+            user_id=current_user["id"], avatar_link=res_1["avatar_link"]
+        )
+        return res_1
+    except:
+        return {"success": False, "avatar_link": None}
 
 
 @router.patch("/delete_avatar/", status_code=status.HTTP_200_OK)
